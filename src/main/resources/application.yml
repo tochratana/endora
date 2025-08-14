@@ -1,0 +1,35 @@
+spring:
+  # PostgreSQL Configuration (for User entity)
+  datasource:
+    url: jdbc:postgresql://localhost:5432/pgsql
+    username: postgres
+    password: 1605
+    driver-class-name: org.postgresql.Driver
+
+  # JPA Configuration for PostgreSQL
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  # MongoDB Configuration (for dynamic tables)
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: spring-app
+      # username: your_mongo_username  # uncomment if auth enabled
+      # password: your_mongo_password  # uncomment if auth enabled
+
+server:
+  port: 8080
+
+# Make MongoDB connection optional
+management:
+  health:
+    mongo:
+      enabled: false
