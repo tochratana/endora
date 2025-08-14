@@ -22,7 +22,7 @@ public interface TableService {
     TableSchema getTableByNameAndProject(String tableName, String projectId);
 
     // New methods for data operations
-    void insertData(String tableName, Map<String, Object> data);
+    void insertData(String tableName, String projectId,    Map<String, Object> data);
 
     List<Map<String, Object>> getAllDataFromTable(String tableName);
 

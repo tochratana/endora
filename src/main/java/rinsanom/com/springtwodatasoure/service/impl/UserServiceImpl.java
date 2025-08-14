@@ -9,7 +9,7 @@ import rinsanom.com.springtwodatasoure.service.UserService;
 import java.util.List;
 @Service
 @RequiredArgsConstructor
-public class UserServiceImpl extends UserService {
+public class UserServiceImpl implements UserService {
 
     private  final UserRepository userRepository;
     @Override

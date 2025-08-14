@@ -1,6 +1,7 @@
 package rinsanom.com.springtwodatasoure.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import rinsanom.com.springtwodatasoure.dto.CreateTableWithRelationshipsDTO;
 import rinsanom.com.springtwodatasoure.entity.TableSchema;
@@ -17,6 +18,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TableServiceImpl implements TableService {
     private final TableSchemaRepository tableSchemaRepository;
     private final TableDataRepository tableDataRepository;
@@ -79,10 +81,10 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
-    public void insertData(String tableName, Map<String, Object> data) {
+    public void insertData(String tableName, String projectId ,  Map<String, Object> data) {
         try {
             // Get the project ID from the data or require it as a parameter
-            String projectId = (String) data.get("projectId");
+            log.info("Attempting to insert data into table: {}, projectId: {}", tableName, projectId);
             if (projectId == null) {
                 throw new RuntimeException("Project ID is required when inserting data");
             }
