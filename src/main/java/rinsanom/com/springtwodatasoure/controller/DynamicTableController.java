@@ -8,6 +8,7 @@ import rinsanom.com.springtwodatasoure.service.TableService;
 import java.util.List;
 import java.util.Map;
 
+@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/api/tables")
 @RequiredArgsConstructor
@@ -32,10 +33,19 @@ public class DynamicTableController {
             @PathVariable String tableName,
             @RequestBody Map<String, Object> data) {
         try {
-            tableService.insertData(tableName, data);
+            // Extract projectId from data payload
+            String projectId = (String) data.get("projectId");
+            if (projectId == null || projectId.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "error", "projectId is required in the request body"
+                ));
+            }
+
+            tableService.insertData(tableName, projectId, data);
             return ResponseEntity.ok(Map.of(
                 "message", "Record created successfully",
                 "table", tableName,
+                "projectId", projectId,
                 "data", data
             ));
         } catch (Exception e) {

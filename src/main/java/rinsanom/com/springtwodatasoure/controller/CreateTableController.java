@@ -14,6 +14,7 @@ import rinsanom.com.springtwodatasoure.service.impl.TableServiceImpl;
 import java.util.List;
 import java.util.Map;
 
+@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/table")
 @RequiredArgsConstructor
@@ -45,10 +46,11 @@ public class CreateTableController {
     @PostMapping("/data")
     public ResponseEntity<Map<String, Object>> insertData(@RequestBody InsertDataRequestDTO request) {
         try {
-            tableService.insertData(request.getTableName(), request.getData());
+            tableService.insertData(request.getTableName(), request.getProjectId(), request.getData());
             return ResponseEntity.ok(Map.of(
                 "message", "Data inserted successfully",
-                "tableName", request.getTableName()
+                "tableName", request.getTableName(),
+                "projectId", request.getProjectId()
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
@@ -66,7 +68,7 @@ public class CreateTableController {
         try {
             // Add projectId to data map
             data.put("projectId", projectId);
-            tableService.insertData(tableName, data);
+            tableService.insertData(tableName, projectId, data);
             return ResponseEntity.ok(Map.of(
                 "message", "Data inserted successfully",
                 "tableName", tableName,
