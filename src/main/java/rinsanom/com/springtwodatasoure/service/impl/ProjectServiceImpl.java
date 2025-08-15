@@ -10,6 +10,7 @@ import rinsanom.com.springtwodatasoure.repository.postgrest.UserRepository;
 import rinsanom.com.springtwodatasoure.service.ProjectService;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -20,8 +21,14 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public Projects save(Projects project) {
-        userRepository.findById(Integer.valueOf(project.getUserId()))
-                .orElseThrow(() -> new RuntimeException("User with ID " + project.getUserId() + " not found"));
+        // Validate that user exists by UUID
+        userRepository.findByUuid(project.getUserUuid())
+                .orElseThrow(() -> new RuntimeException("User with UUID " + project.getUserUuid() + " not found"));
+
+        // Generate project UUID if not already set
+        if (project.getProjectUuid() == null) {
+            project.setProjectUuid(UUID.randomUUID().toString());
+        }
 
         return projectRepository.save(project);
     }
@@ -51,23 +58,29 @@ public class ProjectServiceImpl implements ProjectService {
         Projects project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("Project not found with ID: " + projectId));
 
-        // Validate userId
-        if (project.getUserId() == null || project.getUserId().trim().isEmpty()) {
-            throw new RuntimeException("Project does not have a valid user ID");
+        // Validate userUuid
+        if (project.getUserUuid() == null || project.getUserUuid().trim().isEmpty()) {
+            throw new RuntimeException("Project does not have a valid user UUID");
         }
 
-        // Parse and validate userId
-        Integer userId;
-        try {
-            userId = Integer.valueOf(project.getUserId().trim());
-        } catch (NumberFormatException e) {
-            throw new RuntimeException("Invalid user ID format: " + project.getUserId());
-        }
-
-        // Find user
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+        // Find user by UUID
+        User user = userRepository.findByUuid(project.getUserUuid())
+                .orElseThrow(() -> new RuntimeException("User not found with UUID: " + project.getUserUuid()));
 
         return new ProjectWithUserDTO(project, user);
+    }
+
+    @Override
+    public Projects findByProjectUuid(String projectUuid) {
+        return projectRepository.findByProjectUuid(projectUuid).orElse(null);
+    }
+
+    @Override
+    public List<Projects> findByUserUuid(String userUuid) {
+        // Validate that user exists
+        userRepository.findByUuid(userUuid)
+                .orElseThrow(() -> new RuntimeException("User with UUID " + userUuid + " not found"));
+
+        return projectRepository.findByUserUuid(userUuid);
     }
 }

@@ -11,4 +11,6 @@ public interface ProjectService {
     Projects findById(String id);
     void deleteById(String id);
     ProjectWithUserDTO findProjectWithUser(String projectId);
+    Projects findByProjectUuid(String projectUuid); // Added method to find by project UUID
+    List<Projects> findByUserUuid(String userUuid); // Added method to find projects by user UUID
 }

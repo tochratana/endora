@@ -11,6 +11,7 @@ import rinsanom.com.springtwodatasoure.entity.TableSchema;
 import rinsanom.com.springtwodatasoure.service.DynamicEndpointService;
 import rinsanom.com.springtwodatasoure.service.impl.TableServiceImpl;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -23,8 +24,21 @@ public class CreateTableController {
     private final DynamicEndpointService dynamicEndpointService;
 
     @PostMapping
-    public void createTable(@RequestBody CreateTableRequestDTO request) {
-        tableService.createTables(request.getProjectId(), request.getTableName(), request.getSchema());
+    public ResponseEntity<Map<String, Object>> createTable(@RequestBody CreateTableRequestDTO request) {
+        try {
+            tableService.createTablesWithUserValidation(request.getUserUuid(), request.getProjectUuid(), request.getTableName(), request.getSchema());
+            return ResponseEntity.ok(Map.of(
+                "message", "Table created successfully",
+                "tableName", request.getTableName(),
+                "projectUuid", request.getProjectUuid(),
+                "userUuid", request.getUserUuid()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Failed to create table",
+                "message", e.getMessage()
+            ));
+        }
     }
 
     @GetMapping
@@ -32,25 +46,26 @@ public class CreateTableController {
         return tableService.getAllTables();
     }
 
-    @GetMapping("/project/{projectId}")
-    public List<TableSchema> getTablesByProject(@PathVariable String projectId) {
-        return tableService.getTablesByProjectId(projectId);
+    @GetMapping("/project/{projectUuid}")
+    public List<TableSchema> getTablesByProject(@PathVariable String projectUuid) {
+        return tableService.getTablesByProjectId(projectUuid);
     }
 
-    @GetMapping("/{tableName}/project/{projectId}")
-    public TableSchema getTableByNameAndProject(@PathVariable String tableName, @PathVariable String projectId) {
-        return tableService.getTableByNameAndProject(tableName, projectId);
+    @GetMapping("/{tableName}/project/{projectUuid}")
+    public TableSchema getTableByNameAndProject(@PathVariable String tableName, @PathVariable String projectUuid) {
+        return tableService.getTableByNameAndProject(tableName, projectUuid);
     }
 
-    // New endpoints for data operations with project support
+    // Updated data operations with user validation
     @PostMapping("/data")
     public ResponseEntity<Map<String, Object>> insertData(@RequestBody InsertDataRequestDTO request) {
         try {
-            tableService.insertData(request.getTableName(), request.getProjectId(), request.getData());
+            tableService.insertDataWithUserValidation(request.getUserUuid(), request.getTableName(), request.getProjectUuid(), request.getData());
             return ResponseEntity.ok(Map.of(
                 "message", "Data inserted successfully",
                 "tableName", request.getTableName(),
-                "projectId", request.getProjectId()
+                "projectUuid", request.getProjectUuid(),
+                "userUuid", request.getUserUuid()
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
@@ -60,19 +75,19 @@ public class CreateTableController {
         }
     }
 
-    @PostMapping("/{tableName}/data/project/{projectId}")
+    @PostMapping("/{tableName}/data/project/{projectUuid}/user/{userUuid}")
     public ResponseEntity<Map<String, Object>> insertDataWithProject(
             @PathVariable String tableName,
-            @PathVariable String projectId,
+            @PathVariable String projectUuid,
+            @PathVariable String userUuid,
             @RequestBody Map<String, Object> data) {
         try {
-            // Add projectId to data map
-            data.put("projectId", projectId);
-            tableService.insertData(tableName, projectId, data);
+            tableService.insertDataWithUserValidation(userUuid, tableName, projectUuid, data);
             return ResponseEntity.ok(Map.of(
                 "message", "Data inserted successfully",
                 "tableName", tableName,
-                "projectId", projectId
+                "projectUuid", projectUuid,
+                "userUuid", userUuid
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
@@ -92,17 +107,17 @@ public class CreateTableController {
         }
     }
 
-    @GetMapping("/{tableName}/data/project/{projectId}")
-    public List<Map<String, Object>> getTableDataByProject(@PathVariable String tableName, @PathVariable String projectId) {
-        return tableService.getDataFromTableByProject(tableName, projectId);
+    @GetMapping("/{tableName}/data/project/{projectUuid}")
+    public List<Map<String, Object>> getTableDataByProject(@PathVariable String tableName, @PathVariable String projectUuid) {
+        return tableService.getDataFromTableByProject(tableName, projectUuid);
     }
 
     // Get a specific record by ID
-    @GetMapping("/{tableName}/{id}/project/{projectId}")
+    @GetMapping("/{tableName}/{id}/project/{projectUuid}")
     public ResponseEntity<Map<String, Object>> getRecordById(
             @PathVariable String tableName,
             @PathVariable String id,
-            @PathVariable String projectId) {
+            @PathVariable String projectUuid) {
         try {
             Map<String, Object> record = tableService.getRecordById(tableName, id);
             if (record == null) {
@@ -118,11 +133,11 @@ public class CreateTableController {
     }
 
     // Update a specific record by ID
-    @PutMapping("/{tableName}/{id}/project/{projectId}")
+    @PutMapping("/{tableName}/{id}/project/{projectUuid}")
     public ResponseEntity<Map<String, Object>> updateRecord(
             @PathVariable String tableName,
             @PathVariable String id,
-            @PathVariable String projectId,
+            @PathVariable String projectUuid,
             @RequestBody Map<String, Object> data) {
         try {
             tableService.updateRecord(tableName, id, data);
@@ -130,7 +145,7 @@ public class CreateTableController {
                 "message", "Record updated successfully",
                 "tableName", tableName,
                 "id", id,
-                "projectId", projectId
+                "projectUuid", projectUuid
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
@@ -141,18 +156,18 @@ public class CreateTableController {
     }
 
     // Delete a specific record by ID
-    @DeleteMapping("/{tableName}/{id}/project/{projectId}")
+    @DeleteMapping("/{tableName}/{id}/project/{projectUuid}")
     public ResponseEntity<Map<String, Object>> deleteRecord(
             @PathVariable String tableName,
             @PathVariable String id,
-            @PathVariable String projectId) {
+            @PathVariable String projectUuid) {
         try {
             tableService.deleteRecord(tableName, id);
             return ResponseEntity.ok(Map.of(
                 "message", "Record deleted successfully",
                 "tableName", tableName,
                 "id", id,
-                "projectId", projectId
+                "projectUuid", projectUuid
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
@@ -180,16 +195,22 @@ public class CreateTableController {
         return ResponseEntity.ok(allDocs);
     }
 
-    // NEW ENDPOINTS FOR TABLE RELATIONSHIPS
-
+    // UPDATED ENDPOINTS FOR TABLE RELATIONSHIPS WITH USER VALIDATION
     @PostMapping("/with-relationships")
     public ResponseEntity<Map<String, Object>> createTableWithRelationships(@RequestBody CreateTableWithRelationshipsDTO request) {
         try {
-            tableService.createTableWithRelationships(request.getProjectId(), request.getTableName(), request.getSchema(), request.getRelationships());
+            tableService.createTableWithRelationshipsAndUserValidation(
+                request.getUserUuid(),
+                request.getProjectUuid(),
+                request.getTableName(),
+                request.getSchema(),
+                request.getRelationships()
+            );
             return ResponseEntity.ok(Map.of(
                 "message", "Table with relationships created successfully",
                 "tableName", request.getTableName(),
-                "projectId", request.getProjectId(),
+                "projectUuid", request.getProjectUuid(),
+                "userUuid", request.getUserUuid(),
                 "relationships", request.getRelationships() != null ? request.getRelationships().size() : 0
             ));
         } catch (Exception e) {
@@ -200,23 +221,58 @@ public class CreateTableController {
         }
     }
 
-    @GetMapping("/{tableName}/relationships/project/{projectId}")
-    public ResponseEntity<List<TableSchema>> getRelatedTables(@PathVariable String tableName, @PathVariable String projectId) {
+    @GetMapping("/{tableName}/relationships/project/{projectUuid}")
+    public ResponseEntity<List<TableSchema>> getRelatedTables(@PathVariable String tableName, @PathVariable String projectUuid) {
         try {
-            List<TableSchema> relatedTables = tableService.getRelatedTables(projectId, tableName);
+            List<TableSchema> relatedTables = tableService.getRelatedTables(projectUuid, tableName);
             return ResponseEntity.ok(relatedTables);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(null);
         }
     }
 
-    @GetMapping("/{tableName}/{id}/with-relations/project/{projectId}")
+    // DEBUG ENDPOINT - Add this to help troubleshoot
+    @GetMapping("/debug/project/{projectUuid}")
+    public ResponseEntity<Map<String, Object>> debugProjectTables(@PathVariable String projectUuid) {
+        try {
+            List<TableSchema> allTables = tableService.getTablesByProjectId(projectUuid);
+
+            // Log debug information to server console only
+            System.out.println("DEBUG: Project " + projectUuid + " has " + allTables.size() + " tables");
+            for (TableSchema table : allTables) {
+                System.out.println("DEBUG: Table '" + table.getTableName() + "' has " +
+                    (table.getRelationships() != null ? table.getRelationships().size() : 0) + " relationships");
+
+                if (table.getRelationships() != null) {
+                    for (TableSchema.TableRelationship rel : table.getRelationships()) {
+                        System.out.println("DEBUG: - " + rel.getForeignKeyColumn() + " -> " +
+                            rel.getReferencedTable() + "." + rel.getReferencedColumn());
+                    }
+                }
+            }
+
+            // Return minimal response to frontend
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Debug information logged to server console");
+            response.put("tableCount", allTables.size());
+            response.put("timestamp", java.time.LocalDateTime.now().toString());
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Failed to get debug info",
+                "message", e.getMessage()
+            ));
+        }
+    }
+
+    @GetMapping("/{tableName}/{id}/with-relations/project/{projectUuid}")
     public ResponseEntity<Map<String, Object>> getRecordWithRelations(
             @PathVariable String tableName,
             @PathVariable String id,
-            @PathVariable String projectId) {
+            @PathVariable String projectUuid) {
         try {
-            Map<String, Object> recordWithRelations = tableService.getRecordWithRelations(tableName, id, projectId);
+            Map<String, Object> recordWithRelations = tableService.getRecordWithRelations(tableName, id, projectUuid);
             if (recordWithRelations == null) {
                 return ResponseEntity.notFound().build();
             }

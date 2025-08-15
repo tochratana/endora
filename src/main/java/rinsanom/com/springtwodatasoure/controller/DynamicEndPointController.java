@@ -298,6 +298,7 @@ public class DynamicEndPointController {
     /**
      * Remove endpoint documentation for specific table and project
      */
+
     @DeleteMapping("/docs/{tableName}/project/{projectId}")
     public ResponseEntity<Map<String, Object>> removeEndpointDocumentationByProject(
             @PathVariable String tableName,

@@ -8,6 +8,7 @@ import rinsanom.com.springtwodatasoure.entity.Projects;
 import rinsanom.com.springtwodatasoure.service.ProjectService;
 
 import java.util.List;
+import java.util.Map;
 
 @CrossOrigin(origins = "http://localhost:3000")
 @RestController
@@ -18,8 +19,29 @@ public class ProjectController {
     private final ProjectService projectService;
 
     @PostMapping
-    public ResponseEntity<Projects> createProject(@RequestBody Projects project) {
-        return ResponseEntity.ok(projectService.save(project));
+    public ResponseEntity<Map<String, Object>> createProject(@RequestBody Projects project) {
+        try {
+            // Validate that userUuid is provided
+            if (project.getUserUuid() == null || project.getUserUuid().trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "error", "User UUID is required",
+                    "message", "userUuid field must be provided to create a project"
+                ));
+            }
+
+            Projects savedProject = projectService.save(project);
+            return ResponseEntity.ok(Map.of(
+                "message", "Project created successfully",
+                "project", savedProject,
+                "projectUuid", savedProject.getProjectUuid(),
+                "userUuid", savedProject.getUserUuid()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Failed to create project",
+                "message", e.getMessage()
+            ));
+        }
     }
 
     @GetMapping
@@ -37,6 +59,35 @@ public class ProjectController {
         return ResponseEntity.ok(project);
     }
 
+
+    @GetMapping("/uuid/{projectUuid}")
+    public ResponseEntity<Object> getProjectByUuid(@PathVariable String projectUuid) {
+        try {
+            Projects project = projectService.findByProjectUuid(projectUuid);
+            if (project == null) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok(project);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Failed to find project",
+                "message", e.getMessage()
+            ));
+        }
+    }
+
+    @GetMapping("/user/{userUuid}")
+    public ResponseEntity<Object> getProjectsByUserUuid(@PathVariable String userUuid) {
+        try {
+            List<Projects> projects = projectService.findByUserUuid(userUuid);
+            return ResponseEntity.ok(projects);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Failed to find projects for user",
+                "message", e.getMessage()
+            ));
+        }
+    }
 
     @GetMapping("/{id}/with-user")
     public ResponseEntity<ProjectWithUserDTO> getProjectWithUser(@PathVariable String id) {
