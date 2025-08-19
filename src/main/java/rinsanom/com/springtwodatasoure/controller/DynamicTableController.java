@@ -8,7 +8,7 @@ import rinsanom.com.springtwodatasoure.service.TableService;
 import java.util.List;
 import java.util.Map;
 
-@CrossOrigin(origins = "http://localhost:3000")
+//@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/api/tables")
 @RequiredArgsConstructor
@@ -16,21 +16,21 @@ public class DynamicTableController {
 
     private final TableService tableService;
 
-    // GET /api/tables/{tableName} - Get all records from a specific table
-    @GetMapping("/{tableName}")
-    public ResponseEntity<List<Map<String, Object>>> getAllRecords(@PathVariable String tableName) {
+    // GET /api/tables/{schemaName} - Get all records from a specific table
+    @GetMapping("/{schemaName}")
+    public ResponseEntity<List<Map<String, Object>>> getAllRecords(@PathVariable String schemaName) {
         try {
-            List<Map<String, Object>> records = tableService.getAllDataFromTable(tableName);
+            List<Map<String, Object>> records = tableService.getAllDataFromTable(schemaName);
             return ResponseEntity.ok(records);
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
         }
     }
 
-    // POST /api/tables/{tableName} - Create a new record in a specific table
-    @PostMapping("/{tableName}")
+    // POST /api/tables/{schemaName} - Create a new record in a specific table
+    @PostMapping("/{schemaName}")
     public ResponseEntity<Map<String, Object>> createRecord(
-            @PathVariable String tableName,
+            @PathVariable String schemaName,
             @RequestBody Map<String, Object> data) {
         try {
             // Extract projectId from data payload
@@ -41,28 +41,27 @@ public class DynamicTableController {
                 ));
             }
 
-            tableService.insertData(tableName, projectId, data);
+            tableService.insertData(schemaName, projectId, data);
             return ResponseEntity.ok(Map.of(
                 "message", "Record created successfully",
-                "table", tableName,
+                "table", schemaName,
                 "projectId", projectId,
                 "data", data
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
-                "error", "Failed to create record",
-                "message", e.getMessage()
+                "error", "Failed to create record: " + e.getMessage()
             ));
         }
     }
 
-    // GET /api/tables/{tableName}/{id} - Get a specific record by ID
-    @GetMapping("/{tableName}/{id}")
+    // GET /api/tables/{schemaName}/{id} - Get a specific record by ID
+    @GetMapping("/{schemaName}/{id}")
     public ResponseEntity<Map<String, Object>> getRecordById(
-            @PathVariable String tableName,
+            @PathVariable String schemaName,
             @PathVariable String id) {
         try {
-            Map<String, Object> record = tableService.getRecordById(tableName, id);
+            Map<String, Object> record = tableService.getRecordById(schemaName, id);
             if (record == null) {
                 return ResponseEntity.notFound().build();
             }
@@ -75,17 +74,17 @@ public class DynamicTableController {
         }
     }
 
-    // PUT /api/tables/{tableName}/{id} - Update a specific record by ID
-    @PutMapping("/{tableName}/{id}")
+    // PUT /api/tables/{schemaName}/{id} - Update a specific record by ID
+    @PutMapping("/{schemaName}/{id}")
     public ResponseEntity<Map<String, Object>> updateRecord(
-            @PathVariable String tableName,
+            @PathVariable String schemaName,
             @PathVariable String id,
             @RequestBody Map<String, Object> data) {
         try {
-            tableService.updateRecord(tableName, id, data);
+            tableService.updateRecord(schemaName, id, data);
             return ResponseEntity.ok(Map.of(
                 "message", "Record updated successfully",
-                "table", tableName,
+                "table", schemaName,
                 "id", id,
                 "data", data
             ));
@@ -97,16 +96,16 @@ public class DynamicTableController {
         }
     }
 
-    // DELETE /api/tables/{tableName}/{id} - Delete a specific record by ID
-    @DeleteMapping("/{tableName}/{id}")
+    // DELETE /api/tables/{schemaName}/{id} - Delete a specific record by ID
+    @DeleteMapping("/{schemaName}/{id}")
     public ResponseEntity<Map<String, Object>> deleteRecord(
-            @PathVariable String tableName,
+            @PathVariable String schemaName,
             @PathVariable String id) {
         try {
-            tableService.deleteRecord(tableName, id);
+            tableService.deleteRecord(schemaName, id);
             return ResponseEntity.ok(Map.of(
                 "message", "Record deleted successfully",
-                "table", tableName,
+                "table", schemaName,
                 "id", id
             ));
         } catch (Exception e) {

@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import rinsanom.com.springtwodatasoure.entity.User;
 import rinsanom.com.springtwodatasoure.service.UserService;
 
-@CrossOrigin(origins = "http://localhost:3000")
+//@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/user")
 @RequiredArgsConstructor

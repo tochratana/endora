@@ -19,7 +19,7 @@ public class DynamicEndpointServiceImpl implements DynamicEndpointService {
 
     @Override
     public void generateEndpointsForTable(TableSchema tableSchema) {
-        String tableName = tableSchema.getTableName();
+        String tableName = tableSchema.getSchemaName();
         String projectId = tableSchema.getProjectId();
         String basePath = "/api/tables/" + tableName;
 
@@ -29,7 +29,7 @@ public class DynamicEndpointServiceImpl implements DynamicEndpointService {
 
             // Check if documentation already exists
             Optional<EndpointDocumentation> existingDoc = endpointDocumentationRepository
-                .findByTableNameAndProjectId(tableName, projectId);
+                .findBySchemaNameAndProjectId(tableName, projectId);
 
             EndpointDocumentation endpointDoc;
             if (existingDoc.isPresent()) {
@@ -62,7 +62,7 @@ public class DynamicEndpointServiceImpl implements DynamicEndpointService {
     @Override
     public void removeEndpointsForTable(String tableName) {
         try {
-            endpointDocumentationRepository.deleteByTableName(tableName);
+            endpointDocumentationRepository.deleteBySchemaName(tableName);
             log.info("Removed endpoint documentation for table: {}", tableName);
             System.out.println("Removed endpoints documentation for table: " + tableName);
         } catch (Exception e) {
@@ -73,7 +73,7 @@ public class DynamicEndpointServiceImpl implements DynamicEndpointService {
 
     @Override
     public String getEndpointDocumentation(String tableName) {
-        Optional<EndpointDocumentation> doc = endpointDocumentationRepository.findByTableName(tableName);
+        Optional<EndpointDocumentation> doc = endpointDocumentationRepository.findBySchemaName(tableName);
         return doc.map(EndpointDocumentation::getRawDocumentation)
                 .orElse("No documentation found for table: " + tableName);
     }
@@ -84,7 +84,7 @@ public class DynamicEndpointServiceImpl implements DynamicEndpointService {
         Map<String, String> result = new HashMap<>();
 
         for (EndpointDocumentation doc : allDocs) {
-            result.put(doc.getTableName(), doc.getRawDocumentation());
+            result.put(doc.getSchemaName(), doc.getRawDocumentation());
         }
 
         return result;
@@ -92,11 +92,11 @@ public class DynamicEndpointServiceImpl implements DynamicEndpointService {
 
     // Additional methods for enhanced functionality
     public EndpointDocumentation getEndpointDocumentationEntity(String tableName) {
-        return endpointDocumentationRepository.findByTableName(tableName).orElse(null);
+        return endpointDocumentationRepository.findBySchemaName(tableName).orElse(null);
     }
 
     public EndpointDocumentation getEndpointDocumentationByTableAndProject(String tableName, String projectId) {
-        return endpointDocumentationRepository.findByTableNameAndProjectId(tableName, projectId).orElse(null);
+        return endpointDocumentationRepository.findBySchemaNameAndProjectId(tableName, projectId).orElse(null);
     }
 
     public List<EndpointDocumentation> getEndpointDocumentationByProject(String projectId) {
@@ -105,7 +105,7 @@ public class DynamicEndpointServiceImpl implements DynamicEndpointService {
 
     public void removeEndpointsForTableAndProject(String tableName, String projectId) {
         try {
-            endpointDocumentationRepository.deleteByTableNameAndProjectId(tableName, projectId);
+            endpointDocumentationRepository.deleteBySchemaNameAndProjectId(tableName, projectId);
             log.info("Removed endpoint documentation for table: {} in project: {}", tableName, projectId);
         } catch (Exception e) {
             log.error("Failed to remove endpoint documentation for table: {} in project: {}", tableName, projectId, e);

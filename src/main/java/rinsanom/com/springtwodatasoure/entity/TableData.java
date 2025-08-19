@@ -8,11 +8,11 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 @Data
-@Document(collection = "table_data")
+@Document(collection = "schemas_records")
 public class TableData {
     @Id
     private String id;
-    private String tableName;
+    private String schemaName;
     private String projectId;
     private Map<String, Object> data;
     private LocalDateTime createdAt;
@@ -23,9 +23,9 @@ public class TableData {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public TableData(String tableName, String projectId, Map<String, Object> data) {
+    public TableData(String schemaName, String projectId, Map<String, Object> data) {
         this();
-        this.tableName = tableName;
+        this.schemaName = schemaName;
         this.projectId = projectId;
         this.data = data;
     }

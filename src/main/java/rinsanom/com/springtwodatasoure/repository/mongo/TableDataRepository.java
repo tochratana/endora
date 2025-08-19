@@ -9,10 +9,10 @@ import java.util.Optional;
 
 @Repository
 public interface TableDataRepository extends MongoRepository<TableData, String> {
-    List<TableData> findByTableNameAndProjectId(String tableName, String projectId);
-    List<TableData> findByTableName(String tableName);
+    List<TableData> findBySchemaNameAndProjectId(String schemaName, String projectId);
+    List<TableData> findBySchemaName(String schemaName);
     List<TableData> findByProjectId(String projectId);
-    Optional<TableData> findByIdAndTableNameAndProjectId(String id, String tableName, String projectId);
-    void deleteByTableNameAndProjectId(String tableName, String projectId);
-    void deleteByIdAndTableNameAndProjectId(String id, String tableName, String projectId);
+    Optional<TableData> findByIdAndSchemaNameAndProjectId(String id, String schemaName, String projectId);
+    void deleteBySchemaNameAndProjectId(String schemaName, String projectId);
+    void deleteByIdAndSchemaNameAndProjectId(String id, String schemaName, String projectId);
 }
