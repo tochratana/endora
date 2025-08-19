@@ -1,12 +1,11 @@
 spring:
   # PostgreSQL Configuration (for User entity)
   datasource:
-    url: jdbc:postgresql://localhost:5432/pgsql
-    username: postgres
-    password: 1605
     driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/endora_db
+    username: tochratana
+    password: 123
 
-  # JPA Configuration for PostgreSQL
   jpa:
     hibernate:
       ddl-auto: update
@@ -21,9 +20,28 @@ spring:
     mongodb:
       host: localhost
       port: 27017
-      database: spring-app
+      database: Endora
       # username: your_mongo_username  # uncomment if auth enabled
       # password: your_mongo_password  # uncomment if auth enabled
+
+  # Keycloak Configuration
+  security:
+    oauth2:
+      resource server:
+        jwt:
+          issuer-uri: https://0178177f637c.ngrok-free.app/realms/endora_api
+
+  # Virtual Threads
+  threads:
+    virtual:
+      enabled: true
+
+keycloak:
+  server-url: http://localhost:9090
+  realm: endora_api
+  admin:
+    client-id: admin-cli
+    client-secret: eUmu5xJnDDiphTPiy7BAKhC3xNREGZCe
 
 server:
   port: 8080
@@ -33,3 +51,9 @@ management:
   health:
     mongo:
       enabled: false
+
+# Logging
+logging:
+  level:
+    com.tochratana.api: DEBUG
+    org.keycloak: DEBUG

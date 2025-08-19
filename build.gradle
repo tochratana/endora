@@ -42,6 +42,12 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testCompileOnly 'org.projectlombok:lombok:1.18.30'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.30'
+    // security
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    // oath2
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+    // Keycloak
+    implementation 'org.keycloak:keycloak-admin-client:26.0.6'
 }
 
 tasks.named('test') {
