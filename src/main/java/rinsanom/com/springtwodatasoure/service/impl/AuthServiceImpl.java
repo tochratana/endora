@@ -42,20 +42,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // Create user representation
-        UserRepresentation user = new UserRepresentation();
-        user.setUsername(registerRequest.username());
-        user.setEmail(registerRequest.email());
-        user.setFirstName(registerRequest.firstName());
-        user.setLastName(registerRequest.lastName());
-        user.setEmailVerified(false);
-        user.setEnabled(true);
-
-        // Set password credentials
-        CredentialRepresentation credential = new CredentialRepresentation();
-        credential.setType(CredentialRepresentation.PASSWORD);
-        credential.setValue(registerRequest.password());
-        credential.setTemporary(false);
-        user.setCredentials(List.of(credential));
+        UserRepresentation user = getUserRepresentation(registerRequest);
 
         String keycloakUserId = null;
 
@@ -143,6 +130,24 @@ public class AuthServiceImpl implements AuthService {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                     "Failed to register user: " + e.getMessage());
         }
+    }
+
+    private static UserRepresentation getUserRepresentation(RegisterRequest registerRequest) {
+        UserRepresentation user = new UserRepresentation();
+        user.setUsername(registerRequest.username());
+        user.setEmail(registerRequest.email());
+        user.setFirstName(registerRequest.firstName());
+        user.setLastName(registerRequest.lastName());
+        user.setEmailVerified(false);
+        user.setEnabled(true);
+
+        // Set password credentials
+        CredentialRepresentation credential = new CredentialRepresentation();
+        credential.setType(CredentialRepresentation.PASSWORD);
+        credential.setValue(registerRequest.password());
+        credential.setTemporary(false);
+        user.setCredentials(List.of(credential));
+        return user;
     }
 
     @Override
