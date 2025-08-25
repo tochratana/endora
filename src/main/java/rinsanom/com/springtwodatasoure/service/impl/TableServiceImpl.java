@@ -388,10 +388,10 @@ public class TableServiceImpl implements TableService {
             }
 
             // Get the main record by searching in the specific table and project
-            Optional<TableData> tableDataOpt = tableDataRepository.findById(id);
-            if (tableDataOpt.isEmpty() ||
-                !tableDataOpt.get().getSchemaName().equals(schemaName) ||
-                !tableDataOpt.get().getProjectId().equals(projectId)) {
+            Optional<TableData> tableDataOpt = tableDataRepository.findByIdAndSchemaNameAndProjectId(
+                id, schemaName, projectId
+            );
+            if (tableDataOpt.isEmpty()) {
                 return null;
             }
 
