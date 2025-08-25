@@ -29,7 +29,7 @@ spring:
     oauth2:
       resource server:
         jwt:
-          issuer-uri: https://0178177f637c.ngrok-free.app/realms/endora_api
+          issuer-uri: http://localhost:9090/realms/endora_api
 
   # Virtual Threads
   threads:
@@ -37,11 +37,11 @@ spring:
       enabled: true
 
 keycloak:
-  server-url: http://localhost:9090
+  server-url: https://endora-oauth2.istad.co/
   realm: endora_api
   admin:
     client-id: admin-cli
-    client-secret: eUmu5xJnDDiphTPiy7BAKhC3xNREGZCe
+    client-secret: b2L6hrMg76JLk4GSLd8CGMPRJNnAOko2
 
 server:
   port: 8080
