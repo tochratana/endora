@@ -6,7 +6,7 @@ import java.util.Map;
 
 @Data
 public class CreateTableWithRelationshipsDTO {
-    private String tableName;
+    private String schemaName;  // Changed from tableName to schemaName
     private String projectUuid;  // Changed from projectId to projectUuid
     private String userUuid;     // Added userUuid requirement
     private Map<String, String> schema;

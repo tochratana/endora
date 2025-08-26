@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface TableService {
-    void createTables(String projectId , String tableName, Map< String , String> schema  );
+    void createTables(String projectId , String schemaName, Map< String , String> schema  );
 
     void dropTables();
 
@@ -19,21 +19,21 @@ public interface TableService {
 
     List<TableSchema> getTablesByProjectId(String projectId);
 
-    TableSchema getTableByNameAndProject(String tableName, String projectId);
+    TableSchema getTableByNameAndProject(String schemaName, String projectId);
 
     // New methods for data operations
-    void insertData(String tableName, String projectId, Map<String, Object> data);
+    void insertData(String schemaName, String projectId, Map<String, Object> data);
 
-    List<Map<String, Object>> getAllDataFromTable(String tableName);
+    List<Map<String, Object>> getAllDataFromTable(String schemaName);
 
-    List<Map<String, Object>> getDataFromTableByProject(String tableName, String projectId);
+    List<Map<String, Object>> getDataFromTableByProject(String schemaName, String projectId);
 
     // Additional CRUD methods for dynamic endpoints
-    Map<String, Object> getRecordById(String tableName, String id);
+    Map<String, Object> getRecordById(String schemaName, String id);
 
-    void updateRecord(String tableName, String id, Map<String, Object> data);
+    void updateRecord(String schemaName, String id, Map<String, Object> data);
 
-    void deleteRecord(String tableName, String id);
+    void deleteRecord(String schemaName, String id);
 
     // New methods for handling table relationships
     void createTableWithRelationships(String projectId, String tableName, Map<String, String> schema, List<CreateTableWithRelationshipsDTO.TableRelationship> relationships);

@@ -9,11 +9,11 @@ import java.util.List;
 import java.util.Map;
 
 @Data
-@Document(collection = "endpoint_documentation")
+@Document(collection = "api_logs")
 public class EndpointDocumentation {
     @Id
     private String id;
-    private String tableName;
+    private String schemaName;
     private String projectId;
     private String rawDocumentation;
     private Map<String, Object> structuredDocumentation;
@@ -28,12 +28,12 @@ public class EndpointDocumentation {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public EndpointDocumentation(String tableName, String projectId, String rawDocumentation) {
+    public EndpointDocumentation(String schemaName, String projectId, String rawDocumentation) {
         this();
-        this.tableName = tableName;
+        this.schemaName = schemaName;
         this.projectId = projectId;
         this.rawDocumentation = rawDocumentation;
-        this.basePath = "/api/tables/" + tableName;
+        this.basePath = "/api/tables/" + schemaName;
     }
 
     @Data

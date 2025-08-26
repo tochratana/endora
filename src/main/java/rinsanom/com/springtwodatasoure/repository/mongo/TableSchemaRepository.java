@@ -10,6 +10,6 @@ import java.util.Optional;
 @Repository
 public interface TableSchemaRepository extends MongoRepository<TableSchema, String> {
     List<TableSchema> findByProjectId(String projectId);
-    Optional<TableSchema> findByTableNameAndProjectId(String tableName, String projectId);
+    Optional<TableSchema> findBySchemaNameAndProjectId(String schemaName, String projectId);
     List<TableSchema> findAllByOrderByCreatedAtDesc();
 }

@@ -19,10 +19,10 @@ public class Projects {
     private String description;
 
     // Constructor for creating new projects
-    public Projects(String userUuid, String projectName, String description) {
-        this.userUuid = userUuid;
-        this.projectName = projectName;
-        this.description = description;
-        this.projectUuid = UUID.randomUUID().toString();
-    }
+//    public Projects(String userUuid, String projectName, String description) {
+//        this.userUuid = userUuid;
+//        this.projectName = projectName;
+//        this.description = description;
+//        this.projectUuid = UUID.randomUUID().toString();
+//    }
 }

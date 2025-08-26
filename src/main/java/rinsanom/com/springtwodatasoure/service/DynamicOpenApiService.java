@@ -41,7 +41,7 @@ public class DynamicOpenApiService {
 
         // Generate paths for each table
         for (TableSchema table : tables) {
-            String tableName = table.getTableName();
+            String tableName = table.getSchemaName();
             generateTablePaths(paths, tableName, table);
         }
 

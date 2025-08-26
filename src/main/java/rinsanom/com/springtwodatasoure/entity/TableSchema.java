@@ -9,11 +9,11 @@ import java.util.List;
 import java.util.Map;
 
 @Data
-@Document(collection = "table_schemas")
+@Document(collection = "schemas")
 public class TableSchema {
     @Id
     private String id;
-    private String tableName;
+    private String schemaName;
     private String projectId;
     private Map<String, String> schema;
     private List<TableRelationship> relationships; // New field for relationships
@@ -25,15 +25,15 @@ public class TableSchema {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public TableSchema(String tableName, String projectId, Map<String, String> schema) {
+    public TableSchema(String schemaName, String projectId, Map<String, String> schema) {
         this();
-        this.tableName = tableName;
+        this.schemaName = schemaName;
         this.projectId = projectId;
         this.schema = schema;
     }
 
-    public TableSchema(String tableName, String projectId, Map<String, String> schema, List<TableRelationship> relationships) {
-        this(tableName, projectId, schema);
+    public TableSchema(String schemaName, String projectId, Map<String, String> schema, List<TableRelationship> relationships) {
+        this(schemaName, projectId, schema);
         this.relationships = relationships;
     }
 

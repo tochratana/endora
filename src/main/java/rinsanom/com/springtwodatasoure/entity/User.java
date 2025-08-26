@@ -1,48 +1,44 @@
 package rinsanom.com.springtwodatasoure.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.util.UUID;
 
-@Getter
-@Setter
+@Entity
+@Table(name = "users") // Assuming your table name
+@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
-@Table(name = "users")
 public class User {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "uuid", unique = true, nullable = false)
     private String uuid;
 
-    @Column(nullable = false)
-    private String name;
+    private String profileImage;
+    private String preferences;
 
-    @Column(nullable = false, unique = true)
-    private String email;
+    @Column(name = "keycloak_user_id", unique = true)
+    private String keycloakUserId;
 
-    @Column(nullable = false)
-    private String password;
+    @Column(name = "display_name")
+    private String displayName;
+
+    // Add other fields as needed
 
     @PrePersist
     public void generateUuid() {
-        if (this.uuid == null) {
-            this.uuid = UUID.randomUUID().toString();
+        if (uuid == null) {
+            uuid = UUID.randomUUID().toString();
         }
     }
 
-    public User(String name, String email, String password) {
-        this.name = name;
-        this.email = email;
-        this.password = password;
-        this.uuid = UUID.randomUUID().toString(); // Generate UUID in constructor
-    }
-
-    // Test method to check syntax highlighting
-    public String toString() {
-        return "User{id=" + id + ", name='" + name + "', email='" + email + "'}";
-    }
 }

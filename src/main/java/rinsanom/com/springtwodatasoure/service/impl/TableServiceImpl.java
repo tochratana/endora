@@ -30,12 +30,12 @@ public class TableServiceImpl implements TableService {
     private final DynamicEndpointService dynamicEndpointService;
 
     @Override
-    public void createTables(String projectUuid, String tableName, Map<String, String> schema) {
-        createTablesWithUserValidation(null, projectUuid, tableName, schema);
+    public void createTables(String projectUuid, String schemaName, Map<String, String> schema) {
+        createTablesWithUserValidation(null, projectUuid, schemaName, schema);
     }
 
     // New method that includes user validation
-    public void createTablesWithUserValidation(String userUuid, String projectUuid, String tableName, Map<String, String> schema) {
+    public void createTablesWithUserValidation(String userUuid, String projectUuid, String schemaName, Map<String, String> schema) {
         try {
             // Validate user exists (if userUuid provided)
             if (userUuid != null) {
@@ -50,29 +50,30 @@ public class TableServiceImpl implements TableService {
             }
 
             Projects project = projectOpt.get();
+
+            // Check if user owns the project (if userUuid provided)
             if (userUuid != null && !project.getUserUuid().equals(userUuid)) {
-                throw new RuntimeException("Project " + projectUuid + " does not belong to user " + userUuid);
+                throw new RuntimeException("User " + userUuid + " does not have permission to create tables in project " + projectUuid);
             }
 
-            // Check if table schema already exists in MongoDB
-            Optional<TableSchema> existingTable = tableSchemaRepository.findByTableNameAndProjectId(tableName, projectUuid);
-
+            // Check if table already exists in this project
+            Optional<TableSchema> existingTable = tableSchemaRepository.findBySchemaNameAndProjectId(schemaName, project.getProjectUuid());
             if (existingTable.isPresent()) {
-                throw new RuntimeException("Table '" + tableName + "' already exists in project " + projectUuid);
+                throw new RuntimeException("Table '" + schemaName + "' already exists in project " + projectUuid);
             }
 
-            // Store table schema in MongoDB (no PostgreSQL table creation)
-            TableSchema tableSchema = new TableSchema(tableName, projectUuid, schema);
+            // Create table schema
+            TableSchema tableSchema = new TableSchema(schemaName, project.getProjectUuid(), schema);
             tableSchemaRepository.save(tableSchema);
 
-            // AUTO-GENERATE ENDPOINTS FOR THE NEW TABLE
+            // Generate endpoints automatically
             dynamicEndpointService.generateEndpointsForTable(tableSchema);
 
-            System.out.println("Table schema '" + tableName + "' created successfully in MongoDB for project " + projectUuid);
+            log.info("Table '{}' created successfully in project '{}' by user '{}'", schemaName, projectUuid, userUuid);
 
         } catch (Exception e) {
-            System.err.println("Error creating table schema: " + e.getMessage());
-            throw new RuntimeException("Failed to create table schema: " + e.getMessage(), e);
+            log.error("Failed to create table '{}' in project '{}': {}", schemaName, projectUuid, e.getMessage());
+            throw new RuntimeException("Failed to create table: " + e.getMessage(), e);
         }
     }
 
@@ -102,20 +103,20 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
-    public TableSchema getTableByNameAndProject(String tableName, String projectUuid) {
-        return tableSchemaRepository.findByTableNameAndProjectId(tableName, projectUuid)
+    public TableSchema getTableByNameAndProject(String schemaName, String projectUuid) {
+        return tableSchemaRepository.findBySchemaNameAndProjectId(schemaName, projectUuid)
                 .orElse(null);
     }
 
     @Override
-    public void insertData(String tableName, String projectUuid, Map<String, Object> data) {
-        insertDataWithUserValidation(null, tableName, projectUuid, data);
+    public void insertData(String schemaName, String projectUuid, Map<String, Object> data) {
+        insertDataWithUserValidation(null, schemaName, projectUuid, data);
     }
 
     // New method that includes user validation
-    public void insertDataWithUserValidation(String userUuid, String tableName, String projectUuid, Map<String, Object> data) {
+    public void insertDataWithUserValidation(String userUuid, String schemaName, String projectUuid, Map<String, Object> data) {
         try {
-            log.info("Attempting to insert data into table: {}, projectUuid: {}", tableName, projectUuid);
+            log.info("Attempting to insert data into table: {}, projectUuid: {}", schemaName, projectUuid);
 
             if (projectUuid == null) {
                 throw new RuntimeException("Project UUID is required when inserting data");
@@ -139,16 +140,16 @@ public class TableServiceImpl implements TableService {
             }
 
             // Verify table schema exists
-            TableSchema tableSchema = getTableByNameAndProject(tableName, projectUuid);
+            TableSchema tableSchema = getTableByNameAndProject(schemaName, projectUuid);
             if (tableSchema == null) {
-                throw new RuntimeException("Table '" + tableName + "' does not exist in project " + projectUuid);
+                throw new RuntimeException("Table '" + schemaName + "' does not exist in project " + projectUuid);
             }
 
             // Create new table data document in MongoDB
-            TableData tableData = new TableData(tableName, projectUuid, data);
+            TableData tableData = new TableData(schemaName, projectUuid, data);
             tableDataRepository.save(tableData);
 
-            System.out.println("Data inserted successfully into table '" + tableName + "' for project " + projectUuid);
+            System.out.println("Data inserted successfully into table '" + schemaName + "' for project " + projectUuid);
 
         } catch (Exception e) {
             System.err.println("Error inserting data: " + e.getMessage());
@@ -157,9 +158,9 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
-    public List<Map<String, Object>> getAllDataFromTable(String tableName) {
+    public List<Map<String, Object>> getAllDataFromTable(String schemaName) {
         try {
-            List<TableData> tableDataList = tableDataRepository.findByTableName(tableName);
+            List<TableData> tableDataList = tableDataRepository.findBySchemaName(schemaName);
             return tableDataList.stream()
                     .map(tableData -> {
                         Map<String, Object> dataWithId = new HashMap<>(tableData.getData());
@@ -176,9 +177,9 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
-    public List<Map<String, Object>> getDataFromTableByProject(String tableName, String projectUuid) {
+    public List<Map<String, Object>> getDataFromTableByProject(String schemaName, String projectUuid) {
         try {
-            List<TableData> tableDataList = tableDataRepository.findByTableNameAndProjectId(tableName, projectUuid);
+            List<TableData> tableDataList = tableDataRepository.findBySchemaNameAndProjectId(schemaName, projectUuid);
             return tableDataList.stream()
                     .map(tableData -> {
                         Map<String, Object> dataWithId = new HashMap<>(tableData.getData());
@@ -195,10 +196,10 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
-    public Map<String, Object> getRecordById(String tableName, String id) {
+    public Map<String, Object> getRecordById(String schemaName, String id) {
         try {
             Optional<TableData> tableDataOpt = tableDataRepository.findById(id);
-            if (tableDataOpt.isEmpty() || !tableDataOpt.get().getTableName().equals(tableName)) {
+            if (tableDataOpt.isEmpty() || !tableDataOpt.get().getSchemaName().equals(schemaName)) {
                 return null;
             }
 
@@ -215,11 +216,11 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
-    public void updateRecord(String tableName, String id, Map<String, Object> data) {
+    public void updateRecord(String schemaName, String id, Map<String, Object> data) {
         try {
             Optional<TableData> tableDataOpt = tableDataRepository.findById(id);
-            if (tableDataOpt.isEmpty() || !tableDataOpt.get().getTableName().equals(tableName)) {
-                throw new RuntimeException("No record found with ID: " + id + " in table: " + tableName);
+            if (tableDataOpt.isEmpty() || !tableDataOpt.get().getSchemaName().equals(schemaName)) {
+                throw new RuntimeException("No record found with ID: " + id + " in table: " + schemaName);
             }
 
             TableData tableData = tableDataOpt.get();
@@ -233,7 +234,7 @@ public class TableServiceImpl implements TableService {
 
             tableDataRepository.save(tableData);
 
-            System.out.println("Record updated successfully in table '" + tableName + "' with ID: " + id);
+            System.out.println("Record updated successfully in table '" + schemaName + "' with ID: " + id);
 
         } catch (Exception e) {
             System.err.println("Error updating record: " + e.getMessage());
@@ -242,16 +243,16 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
-    public void deleteRecord(String tableName, String id) {
+    public void deleteRecord(String schemaName, String id) {
         try {
             Optional<TableData> tableDataOpt = tableDataRepository.findById(id);
-            if (tableDataOpt.isEmpty() || !tableDataOpt.get().getTableName().equals(tableName)) {
-                throw new RuntimeException("No record found with ID: " + id + " in table: " + tableName);
+            if (tableDataOpt.isEmpty() || !tableDataOpt.get().getSchemaName().equals(schemaName)) {
+                throw new RuntimeException("No record found with ID: " + id + " in table: " + schemaName);
             }
 
             tableDataRepository.deleteById(id);
 
-            System.out.println("Record deleted successfully from table '" + tableName + "' with ID: " + id);
+            System.out.println("Record deleted successfully from table '" + schemaName + "' with ID: " + id);
 
         } catch (Exception e) {
             System.err.println("Error deleting record: " + e.getMessage());
@@ -260,13 +261,13 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
-    public void createTableWithRelationships(String projectUuid, String tableName, Map<String, String> schema,
+    public void createTableWithRelationships(String projectUuid, String schemaName, Map<String, String> schema,
                                            List<CreateTableWithRelationshipsDTO.TableRelationship> relationships) {
-        createTableWithRelationshipsAndUserValidation(null, projectUuid, tableName, schema, relationships);
+        createTableWithRelationshipsAndUserValidation(null, projectUuid, schemaName, schema, relationships);
     }
 
     // New method that includes user validation
-    public void createTableWithRelationshipsAndUserValidation(String userUuid, String projectUuid, String tableName,
+    public void createTableWithRelationshipsAndUserValidation(String userUuid, String projectUuid, String schemaName,
                                                              Map<String, String> schema,
                                                              List<CreateTableWithRelationshipsDTO.TableRelationship> relationships) {
         try {
@@ -288,10 +289,10 @@ public class TableServiceImpl implements TableService {
             }
 
             // Check if table schema already exists in MongoDB
-            Optional<TableSchema> existingTable = tableSchemaRepository.findByTableNameAndProjectId(tableName, projectUuid);
+            Optional<TableSchema> existingTable = tableSchemaRepository.findBySchemaNameAndProjectId(schemaName, projectUuid);
 
             if (existingTable.isPresent()) {
-                throw new RuntimeException("Table '" + tableName + "' already exists in project " + projectUuid);
+                throw new RuntimeException("Table '" + schemaName + "' already exists in project " + projectUuid);
             }
 
             // Validate that referenced tables exist in the same project
@@ -305,7 +306,7 @@ public class TableServiceImpl implements TableService {
             }
 
             // Create table schema with relationships (no PostgreSQL table creation)
-            TableSchema tableSchema = new TableSchema(tableName, projectUuid, schema);
+            TableSchema tableSchema = new TableSchema(schemaName, projectUuid, schema);
 
             // Convert DTO relationships to entity relationships
             List<TableSchema.TableRelationship> entityRelationships = null;
@@ -329,7 +330,7 @@ public class TableServiceImpl implements TableService {
             // AUTO-GENERATE ENDPOINTS FOR THE NEW TABLE
             dynamicEndpointService.generateEndpointsForTable(tableSchema);
 
-            System.out.println("Table with relationships '" + tableName + "' created successfully in MongoDB for project " + projectUuid);
+            System.out.println("Table with relationships '" + schemaName + "' created successfully in MongoDB for project " + projectUuid);
 
         } catch (Exception e) {
             System.err.println("Error creating table with relationships: " + e.getMessage());
@@ -338,16 +339,16 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
-    public List<TableSchema> getRelatedTables(String projectId, String tableName) {
+    public List<TableSchema> getRelatedTables(String projectId, String schemaName) {
         try {
-            System.out.println("DEBUG: Looking for tables related to '" + tableName + "' in project: " + projectId);
+            System.out.println("DEBUG: Looking for tables related to '" + schemaName + "' in project: " + projectId);
 
             List<TableSchema> projectTables = getTablesByProjectId(projectId);
             System.out.println("DEBUG: Found " + projectTables.size() + " tables in project");
 
             // Debug: Print all tables and their relationships
             for (TableSchema table : projectTables) {
-                System.out.println("DEBUG: Table '" + table.getTableName() + "' has relationships: " +
+                System.out.println("DEBUG: Table '" + table.getSchemaName() + "' has relationships: " +
                     (table.getRelationships() != null ? table.getRelationships().size() : 0));
 
                 if (table.getRelationships() != null) {
@@ -364,11 +365,11 @@ public class TableServiceImpl implements TableService {
                             return false;
                         }
                         return table.getRelationships().stream()
-                                .anyMatch(rel -> rel.getReferencedTable().equals(tableName));
+                                .anyMatch(rel -> rel.getReferencedTable().equals(schemaName));
                     })
                     .toList();
 
-            System.out.println("DEBUG: Found " + relatedTables.size() + " tables that reference '" + tableName + "'");
+            System.out.println("DEBUG: Found " + relatedTables.size() + " tables that reference '" + schemaName + "'");
 
             return relatedTables;
         } catch (Exception e) {
@@ -378,19 +379,19 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
-    public Map<String, Object> getRecordWithRelations(String tableName, String id, String projectId) {
+    public Map<String, Object> getRecordWithRelations(String schemaName, String id, String projectId) {
         try {
             // First, verify the table exists in the project
-            TableSchema tableSchema = getTableByNameAndProject(tableName, projectId);
+            TableSchema tableSchema = getTableByNameAndProject(schemaName, projectId);
             if (tableSchema == null) {
-                throw new RuntimeException("Table '" + tableName + "' does not exist in project " + projectId);
+                throw new RuntimeException("Table '" + schemaName + "' does not exist in project " + projectId);
             }
 
             // Get the main record by searching in the specific table and project
-            Optional<TableData> tableDataOpt = tableDataRepository.findById(id);
-            if (tableDataOpt.isEmpty() ||
-                !tableDataOpt.get().getTableName().equals(tableName) ||
-                !tableDataOpt.get().getProjectId().equals(projectId)) {
+            Optional<TableData> tableDataOpt = tableDataRepository.findByIdAndSchemaNameAndProjectId(
+                id, schemaName, projectId
+            );
+            if (tableDataOpt.isEmpty()) {
                 return null;
             }
 
@@ -402,11 +403,11 @@ public class TableServiceImpl implements TableService {
 
             // Check if relationships are defined
             if (tableSchema.getRelationships() == null || tableSchema.getRelationships().isEmpty()) {
-                System.out.println("DEBUG: No relationships defined for table '" + tableName + "'");
+                System.out.println("DEBUG: No relationships defined for table '" + schemaName + "'");
                 return record; // No relationships defined, return basic record
             }
 
-            System.out.println("DEBUG: Processing " + tableSchema.getRelationships().size() + " relationships for table '" + tableName + "'");
+            System.out.println("DEBUG: Processing " + tableSchema.getRelationships().size() + " relationships for table '" + schemaName + "'");
 
             // Load related data for each foreign key
             for (TableSchema.TableRelationship rel : tableSchema.getRelationships()) {
@@ -417,7 +418,7 @@ public class TableServiceImpl implements TableService {
                 if (foreignKeyValue != null) {
                     try {
                         // Find related record in the same project
-                        List<TableData> relatedRecords = tableDataRepository.findByTableNameAndProjectId(
+                        List<TableData> relatedRecords = tableDataRepository.findBySchemaNameAndProjectId(
                             rel.getReferencedTable(), projectId);
 
                         System.out.println("DEBUG: Found " + relatedRecords.size() + " records in table '" + rel.getReferencedTable() + "'");
@@ -484,4 +485,3 @@ public class TableServiceImpl implements TableService {
         }
     }
 }
-
