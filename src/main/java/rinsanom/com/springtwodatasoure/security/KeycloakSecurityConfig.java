@@ -32,23 +32,29 @@ public class KeycloakSecurityConfig {
     @Bean
     public SecurityFilterChain configureApiSecurity(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(endpoint -> endpoint
-                // Auth endpoints - permit all
+                // Auth endpoints - permit all (make sure these are at the top)
                 .requestMatchers("/api/auth/**").permitAll()
 
-                // User endpoints
-                // .requestMatchers(HttpMethod.GET, "/api/users").hasAnyRole(ROLE_USER)
-                // .requestMatchers(HttpMethod.GET, "/api/products").hasAnyRole(ROLE_USER)
+                // Public endpoints
+                .requestMatchers(HttpMethod.GET, "/api/users").permitAll()
 
-                // Admin endpoints
-                // .requestMatchers(HttpMethod.POST, "/api/users").hasAnyRole(ROLE_ADMIN)
-                // .requestMatchers(HttpMethod.POST, "/api/products").hasAnyRole(ROLE_ADMIN)
+                // User role endpoints
+                .requestMatchers(HttpMethod.GET, "/api/products").hasAnyRole(ROLE_USER)
+
+                // Admin role endpoints
+                .requestMatchers(HttpMethod.POST, "/api/users").hasAnyRole(ROLE_ADMIN)
+                .requestMatchers(HttpMethod.POST, "/api/products").hasAnyRole(ROLE_ADMIN)
 
                 // All other requests require authentication
-                .anyRequest().permitAll());
+                .anyRequest().authenticated());
 
-        http.formLogin(form -> form.disable());
-        http.csrf(token -> token.disable());
+        // Disable CSRF for API endpoints
+        http.csrf(csrf -> csrf.disable());
+
+        // Configure CORS
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
+
+        // Stateless session management
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         // Configure OAuth2 Resource Server with JWT
@@ -73,6 +79,7 @@ public class KeycloakSecurityConfig {
                     .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
                     .collect(Collectors.toList());
         };
+
         JwtAuthenticationConverter jwtConverter = new JwtAuthenticationConverter();
         jwtConverter.setJwtGrantedAuthoritiesConverter(jwtGrantedAuthoritiesConverter);
         return jwtConverter;

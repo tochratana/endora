@@ -1,9 +1,9 @@
 spring:
   # PostgreSQL Configuration (for User entity)
   datasource:
-    url: jdbc:postgresql://localhost:5432/endora
-    username: oudom
-    password: 123
+    url: jdbc:postgresql://localhost:5432/pgsql
+    username: postgres
+    password: 1605
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -20,9 +20,25 @@ spring:
     mongodb:
       host: localhost
       port: 27017
-      database: endora
+      database: spring-app
       # username: your_mongo_username  # uncomment if auth enabled
       # password: your_mongo_password  # uncomment if auth enabled
+
+  # Email Configuration for OTP
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: endora.istad@gmail.com  # Replace with your Gmail
+    password: utnu dtwk xyre ebkh   # Replace with your Gmail app password
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connection timeout: 5000
+          timeout: 3000
+          write timeout: 5000
 
   # Keycloak Configuration
   security:
@@ -39,9 +55,17 @@ spring:
 keycloak:
   server-url: https://endora-oauth2.istad.co/
   realm: endora_api
+  client-id: admin-cli  # Add your actual client ID here
+  client-secret: b2L6hrMg76JLk4GSLd8CGMPRJNnAOko2
   admin:
     client-id: admin-cli
     client-secret: b2L6hrMg76JLk4GSLd8CGMPRJNnAOko2
+
+# OTP Configuration
+app:
+  otp:
+    expiry-minutes: 5
+    max-attempts: 3
 
 server:
   port: 8080
