@@ -1,11 +1,11 @@
 {
 	"info": {
-		"_postman_id": "d64cc2f8-04eb-45c1-84d8-91c91d554498",
+		"_postman_id": "d3fcefe1-4cbd-4aa5-b75a-90e19e7c0989",
 		"name": "Endorav2",
 		"description": "Complete collection of all endpoints for the Spring Two DataSource application",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "35058659",
-		"_collection_link": "https://dev-smos.postman.co/workspace/NestJs~60d57991-6416-45fe-85e1-5888dd088eb0/collection/35058659-d64cc2f8-04eb-45c1-84d8-91c91d554498?action=share&source=collection_link&creator=35058659"
+		"_collection_link": "https://dev-smos.postman.co/workspace/NestJs~60d57991-6416-45fe-85e1-5888dd088eb0/collection/35058659-d3fcefe1-4cbd-4aa5-b75a-90e19e7c0989?action=share&source=collection_link&creator=35058659"
 	},
 	"item": [
 		{
@@ -40,6 +40,53 @@
 					"response": []
 				},
 				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"authToken\", jsonData.accessToken);",
+									"    pm.environment.set(\"refreshToken\", jsonData.refreshToken);",
+									"    pm.environment.set(\"userUuid\", jsonData.userId);",
+									"    pm.environment.set(\"username\", jsonData.username);",
+									"    pm.environment.set(\"email\", jsonData.email);",
+									"    console.log(\"Tokens saved to environment variables\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"usernameOrEmail\": \"rinsanom3@gmail.com\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Verify Email",
 					"request": {
 						"method": "POST",
@@ -54,6 +101,118 @@
 								"auth",
 								"verify",
 								"{{userUuid}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Sent OTP",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"string\",\n  \"otp\": \"string\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/verify-otp",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"verify-otp"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Forgot Password",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"string\",\n  \"otp\": \"string\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/verify-otp",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"verify-otp"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "verify-otp-forgot-password",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"rinsanom3@gmail.com\",\n  \"otp\": \"280875\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/verify-forgot-password-otp",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"verify-forgot-password-otp"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "reset-password",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"rinsanom3@gmail.com\",\n  \"otp\": \"280875\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/verify-forgot-password-otp",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"verify-forgot-password-otp"
 							]
 						}
 					},
@@ -170,11 +329,15 @@
 							{
 								"key": "Content-Type",
 								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"projectName\": \"My New Project\",\n  \"description\": \"Project description\",\n  \"userUuid\": \"{{userUuid}}\"\n}"
+							"raw": "{\n  \"projectName\": \"My New Project\",\n  \"description\": \"Project description\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/projects",
@@ -314,11 +477,15 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{authToken}}"
 									}
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"userUuid\": \"{{userUuid}}\",\n  \"projectUuid\": \"{{projectUuid}}\",\n  \"schemaName\": \"orders\",\n  \"schema\": {\n    \"customer_id\": \"String\",\n    \"product_id\": \"String\",\n    \"quantity\": \"Integer\",\n    \"total_amount\": \"Double\",\n    \"order_date\": \"String\",\n    \"status\": \"String\"\n  },\n  \"relationships\": [\n    {\n      \"foreignKeyColumn\": \"customer_id\",\n      \"referencedTable\": \"customers\",\n      \"referencedColumn\": \"id\",\n      \"onDelete\": \"CASCADE\",\n      \"onUpdate\": \"CASCADE\"\n    },\n    {\n      \"foreignKeyColumn\": \"product_id\",\n      \"referencedTable\": \"products\",\n      \"referencedColumn\": \"id\",\n      \"onDelete\": \"RESTRICT\",\n      \"onUpdate\": \"CASCADE\"\n    }\n  ]\n}",
+									"raw": "{\n  \"projectUuid\": \"{{projectUuid}}\",\n  \"schemaName\": \"orders\",\n  \"schema\": {\n    \"customer_id\": \"VARCHAR(255)\",\n    \"product_id\": \"VARCHAR(255)\",\n    \"quantity\": \"Integer\",\n    \"total_amount\": \"Double\",\n    \"order_date\": \"VARCHAR(255)\"\n  },\n  \"relationships\": [\n    {\n      \"foreignKeyColumn\": \"users_id\",\n      \"referencedTable\": \"users\",\n      \"referencedColumn\": \"id\",\n      \"onDelete\": \"CASCADE\",\n      \"onUpdate\": \"CASCADE\"\n    }\n  ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -526,11 +693,15 @@
 							{
 								"key": "Content-Type",
 								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"userUuid\": \"{{userUuid}}\",\n  \"projectUuid\": \"{{projectUuid}}\",\n  \"schemaName\": \"users\",\n  \"schema\": {\n    \"name\": \" VARCHAR(255)\",\n    \"email\": \" VARCHAR(255)\",\n    \"age\": \"INT\"\n  }\n}"
+							"raw": "{\n  \"projectUuid\": \"{{projectUuid}}\",\n  \"schemaName\": \"users\",\n  \"schema\": {\n    \"name\": \"VARCHAR(255)\",\n    \"email\": \"VARCHAR(255)\",\n    \"age\": \"INT\"\n  }\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/table",
@@ -640,11 +811,15 @@
 							{
 								"key": "Content-Type",
 								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"userUuid\": \"{{userUuid}}\",\n  \"projectUuid\": \"{{projectUuid}}\",\n  \"schemaName\": \"{{schemaName}}\",\n  \"data\": {\n    \"name\": \"Jane Doe\",\n    \"email\": \"jane@example.com\",\n    \"age\": 25,\n    \"isActive\": true\n  }\n}"
+							"raw": "{\n  \"projectUuid\": \"{{projectUuid}}\",\n  \"schemaName\": \"{{schemaName}}\",\n  \"data\": {\n    \"users_id\": \"7\",\n    \"product_id\": \"1\",\n    \"quantity\": 25,\n    \"total_amount\": 150.75,\n    \"order_date\" : \"2025-02-02\"\n  }\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/table/data",
@@ -1039,6 +1214,54 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "OpenAPI Documentation",
+			"item": [
+				{
+					"name": "Get OpenAPI Specification",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/openapi/project/{{projectId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"openapi",
+								"project",
+								"{{projectId}}"
+							]
+						},
+						"description": "Generate OpenAPI specification for a specific project"
+					},
+					"response": []
+				},
+				{
+					"name": "Download Postman Collection",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/openapi/project/{{projectId}}/postman",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"openapi",
+								"project",
+								"{{projectId}}",
+								"postman"
+							]
+						},
+						"description": "Download generated Postman collection for a specific project"
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"event": [
@@ -1047,7 +1270,43 @@
 			"script": {
 				"type": "text/javascript",
 				"exec": [
-					""
+					"// Auto-fill authorization token for protected endpoints",
+					"const authToken = pm.environment.get('authToken');",
+					"",
+					"// List of endpoints that require authentication",
+					"const protectedEndpoints = [",
+					"    '/projects',",
+					"    '/table',",
+					"    '/api/users/profile'",
+					"];",
+					"",
+					"// Check if current request needs authentication",
+					"const requestUrl = pm.request.url.toString();",
+					"const needsAuth = protectedEndpoints.some(endpoint => ",
+					"    requestUrl.includes(endpoint) && !requestUrl.includes('/api/auth/')",
+					");",
+					"",
+					"// Auto-set Authorization header if token exists and endpoint needs auth",
+					"if (needsAuth && authToken && authToken !== 'your-auth-token') {",
+					"    pm.request.headers.add({",
+					"        key: 'Authorization',",
+					"        value: `Bearer ${authToken}`",
+					"    });",
+					"    ",
+					"    console.log('✅ Authorization header automatically set for protected endpoint');",
+					"} else if (needsAuth && (!authToken || authToken === 'your-auth-token')) {",
+					"    console.log('⚠️  Warning: This endpoint requires authentication. Please login first.');",
+					"    console.log('💡 Tip: Run the \"Login\" request first to get an auth token.');",
+					"} else {",
+					"    console.log('ℹ️  Public endpoint - no authentication required');",
+					"}",
+					"",
+					"// Display current auth status",
+					"if (authToken && authToken !== 'your-auth-token') {",
+					"    console.log(`🔐 Auth Token Status: Active (${authToken.substring(0, 20)}...)`);",
+					"} else {",
+					"    console.log('🔓 Auth Token Status: Not set or default value');",
+					"}"
 				]
 			}
 		},
@@ -1056,7 +1315,70 @@
 			"script": {
 				"type": "text/javascript",
 				"exec": [
-					""
+					"// Global test script for all requests",
+					"",
+					"// Log response status and time",
+					"console.log(`📊 Response Status: ${pm.response.code} - ${pm.response.status}`);",
+					"console.log(`⏱️  Response Time: ${pm.response.responseTime}ms`);",
+					"",
+					"// Auto-save tokens from login response",
+					"if (pm.info.requestName === 'Login' && pm.response.code === 200) {",
+					"    try {",
+					"        const responseJson = pm.response.json();",
+					"        ",
+					"        if (responseJson.accessToken) {",
+					"            pm.environment.set('authToken', responseJson.accessToken);",
+					"            console.log('✅ Access token automatically saved to environment');",
+					"        }",
+					"        ",
+					"        if (responseJson.refreshToken) {",
+					"            pm.environment.set('refreshToken', responseJson.refreshToken);",
+					"            console.log('✅ Refresh token automatically saved to environment');",
+					"        }",
+					"        ",
+					"        if (responseJson.userId) {",
+					"            pm.environment.set('userUuid', responseJson.userId);",
+					"            console.log('✅ User UUID automatically saved to environment');",
+					"        }",
+					"        ",
+					"        if (responseJson.username) {",
+					"            pm.environment.set('username', responseJson.username);",
+					"            console.log('✅ Username automatically saved to environment');",
+					"        }",
+					"        ",
+					"        if (responseJson.email) {",
+					"            pm.environment.set('email', responseJson.email);",
+					"            console.log('✅ Email automatically saved to environment');",
+					"        }",
+					"        ",
+					"        console.log('🎉 Login successful! All tokens and user info saved automatically.');",
+					"        console.log('💡 You can now use protected endpoints without manually setting headers.');",
+					"        ",
+					"    } catch (error) {",
+					"        console.log('❌ Error parsing login response:', error);",
+					"    }",
+					"}",
+					"",
+					"// Auto-save project UUID from create project response",
+					"if (pm.info.requestName === 'Create Project' && pm.response.code === 200) {",
+					"    try {",
+					"        const responseJson = pm.response.json();",
+					"        if (responseJson.projectUuid) {",
+					"            pm.environment.set('projectUuid', responseJson.projectUuid);",
+					"            console.log('✅ Project UUID automatically saved to environment');",
+					"        }",
+					"    } catch (error) {",
+					"        console.log('❌ Error parsing create project response:', error);",
+					"    }",
+					"}",
+					"",
+					"// Check for authentication errors",
+					"if (pm.response.code === 401) {",
+					"    console.log('🚫 Authentication Error: Please login to get a valid token');",
+					"    console.log('💡 Tip: Run the \"Login\" request first');",
+					"} else if (pm.response.code === 403) {",
+					"    console.log('🚫 Authorization Error: You do not have permission for this action');",
+					"}"
 				]
 			}
 		}
@@ -1085,6 +1407,16 @@
 		{
 			"key": "recordId",
 			"value": "your-record-id",
+			"type": "string"
+		},
+		{
+			"key": "projectId",
+			"value": "your-project-id",
+			"type": "string"
+		},
+		{
+			"key": "authToken",
+			"value": "your-auth-token",
 			"type": "string"
 		}
 	]

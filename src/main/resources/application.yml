@@ -1,9 +1,9 @@
 spring:
   # PostgreSQL Configuration (for User entity)
   datasource:
-    url: jdbc:postgresql://localhost:5432/endora_db
-    username: tochratana
-    password: 123
+    url: jdbc:postgresql://localhost:5432/pgsql
+    username: postgres
+    password: 1605
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -20,7 +20,7 @@ spring:
     mongodb:
       host: localhost
       port: 27017
-      database: Endora
+      database: spring-app
       # username: your_mongo_username  # uncomment if auth enabled
       # password: your_mongo_password  # uncomment if auth enabled
 
@@ -45,7 +45,7 @@ spring:
     oauth2:
       resource server:
         jwt:
-          issuer-uri: https://0178177f637c.ngrok-free.app/realms/endora_api
+          issuer-uri: https://endora-oauth2.istad.co/realms/endora_api
 
   # Virtual Threads
   threads:
