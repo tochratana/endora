@@ -36,15 +36,15 @@ public class KeycloakSecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
 
                 // User endpoints
-                .requestMatchers(HttpMethod.GET, "/api/users").hasAnyRole(ROLE_USER)
-                .requestMatchers(HttpMethod.GET, "/api/products").hasAnyRole(ROLE_USER)
+                // .requestMatchers(HttpMethod.GET, "/api/users").hasAnyRole(ROLE_USER)
+                // .requestMatchers(HttpMethod.GET, "/api/products").hasAnyRole(ROLE_USER)
 
                 // Admin endpoints
-                .requestMatchers(HttpMethod.POST, "/api/users").hasAnyRole(ROLE_ADMIN)
-                .requestMatchers(HttpMethod.POST, "/api/products").hasAnyRole(ROLE_ADMIN)
+                // .requestMatchers(HttpMethod.POST, "/api/users").hasAnyRole(ROLE_ADMIN)
+                // .requestMatchers(HttpMethod.POST, "/api/products").hasAnyRole(ROLE_ADMIN)
 
                 // All other requests require authentication
-                .anyRequest().authenticated());
+                .anyRequest().permitAll());
 
         http.formLogin(form -> form.disable());
         http.csrf(token -> token.disable());

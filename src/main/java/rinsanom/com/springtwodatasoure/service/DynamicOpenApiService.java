@@ -36,6 +36,30 @@ public class DynamicOpenApiService {
         servers.add(server);
         openApiSpec.put("servers", servers);
 
+        // Components section for reusable schemas
+        Map<String, Object> components = new HashMap<>();
+        Map<String, Object> schemas = new HashMap<>();
+
+        // Add error response schema
+        Map<String, Object> errorSchema = new HashMap<>();
+        errorSchema.put("type", "object");
+        Map<String, Object> errorProperties = new HashMap<>();
+        Map<String, Object> messageProperty = new HashMap<>();
+        messageProperty.put("type", "string");
+        messageProperty.put("description", "Error message");
+        errorProperties.put("message", messageProperty);
+        errorSchema.put("properties", errorProperties);
+        schemas.put("Error", errorSchema);
+
+        // Add schemas for each table
+        for (TableSchema table : tables) {
+            String tableName = table.getSchemaName();
+            schemas.put(tableName, createTableSchemaForComponents(tableName, table));
+        }
+
+        components.put("schemas", schemas);
+        openApiSpec.put("components", components);
+
         // Paths
         Map<String, Object> paths = new HashMap<>();
 
@@ -55,11 +79,12 @@ public class DynamicOpenApiService {
         // Base path operations (GET all, POST)
         Map<String, Object> basePathOperations = new HashMap<>();
 
-        // GET all records
+        // GET all records with query parameters
         Map<String, Object> getAllOperation = new HashMap<>();
         getAllOperation.put("summary", "Get all " + tableName);
-        getAllOperation.put("description", "Retrieve all records from " + tableName + " table");
+        getAllOperation.put("description", "Retrieve all records from " + tableName + " table with optional filtering and pagination");
         getAllOperation.put("tags", Arrays.asList(tableName));
+        getAllOperation.put("parameters", createQueryParameters());
         getAllOperation.put("responses", createGetAllResponses(tableName, tableSchema));
         basePathOperations.put("get", getAllOperation);
 
@@ -109,6 +134,52 @@ public class DynamicOpenApiService {
         paths.put(idPath, idPathOperations);
     }
 
+    private List<Map<String, Object>> createQueryParameters() {
+        List<Map<String, Object>> parameters = new ArrayList<>();
+
+        // Page parameter
+        Map<String, Object> pageParam = new HashMap<>();
+        pageParam.put("name", "page");
+        pageParam.put("in", "query");
+        pageParam.put("description", "Page number for pagination (starts from 0)");
+        pageParam.put("required", false);
+        Map<String, Object> pageSchema = new HashMap<>();
+        pageSchema.put("type", "integer");
+        pageSchema.put("format", "int32");
+        pageSchema.put("default", 0);
+        pageSchema.put("minimum", 0);
+        pageParam.put("schema", pageSchema);
+        parameters.add(pageParam);
+
+        // Size parameter
+        Map<String, Object> sizeParam = new HashMap<>();
+        sizeParam.put("name", "size");
+        sizeParam.put("in", "query");
+        sizeParam.put("description", "Number of records per page");
+        sizeParam.put("required", false);
+        Map<String, Object> sizeSchema = new HashMap<>();
+        sizeSchema.put("type", "integer");
+        sizeSchema.put("format", "int32");
+        sizeSchema.put("default", 20);
+        sizeSchema.put("minimum", 1);
+        sizeSchema.put("maximum", 100);
+        sizeParam.put("schema", sizeSchema);
+        parameters.add(sizeParam);
+
+        // Sort parameter
+        Map<String, Object> sortParam = new HashMap<>();
+        sortParam.put("name", "sort");
+        sortParam.put("in", "query");
+        sortParam.put("description", "Sort criteria in the format: property(,asc|desc). Example: id,desc");
+        sortParam.put("required", false);
+        Map<String, Object> sortSchema = new HashMap<>();
+        sortSchema.put("type", "string");
+        sortParam.put("schema", sortSchema);
+        parameters.add(sortParam);
+
+        return parameters;
+    }
+
     private Map<String, Object> createIdParameter() {
         Map<String, Object> parameter = new HashMap<>();
         parameter.put("name", "id");
@@ -148,6 +219,7 @@ public class DynamicOpenApiService {
         Map<String, Object> projectIdProperty = new HashMap<>();
         projectIdProperty.put("type", "string");
         projectIdProperty.put("description", "Project ID for this record");
+        projectIdProperty.put("example", "proj_12345");
         properties.put("projectId", projectIdProperty);
 
         if (tableSchema.getSchema() != null) {
@@ -156,13 +228,43 @@ public class DynamicOpenApiService {
                 propertySchema.put("type", convertToOpenApiType(columnType));
                 propertySchema.put("description", "Field: " + columnName + " (Type: " + columnType + ")");
 
-                // Add format for specific types
-                String openApiType = convertToOpenApiType(columnType);
-                if ("integer".equals(openApiType)) {
-                    propertySchema.put("format", "int32");
-                } else if ("number".equals(openApiType)) {
-                    propertySchema.put("format", "double");
-                }
+                // Add format and examples using helper method
+                propertySchema = addExampleAndFormat(columnType, propertySchema);
+
+                properties.put(columnName, propertySchema);
+            });
+        }
+
+        schema.put("properties", properties);
+
+        // Mark projectId as required
+        schema.put("required", Arrays.asList("projectId"));
+
+        return schema;
+    }
+
+    private Map<String, Object> createTableSchemaForComponents(String tableName, TableSchema tableSchema) {
+        Map<String, Object> schema = new HashMap<>();
+        schema.put("type", "object");
+        schema.put("title", tableName + " Schema");
+
+        Map<String, Object> properties = new HashMap<>();
+
+        // Add projectId as a required field
+        Map<String, Object> projectIdProperty = new HashMap<>();
+        projectIdProperty.put("type", "string");
+        projectIdProperty.put("description", "Project ID for this record");
+        projectIdProperty.put("example", "proj_12345");
+        properties.put("projectId", projectIdProperty);
+
+        if (tableSchema.getSchema() != null) {
+            tableSchema.getSchema().forEach((columnName, columnType) -> {
+                Map<String, Object> propertySchema = new HashMap<>();
+                propertySchema.put("type", convertToOpenApiType(columnType));
+                propertySchema.put("description", "Field: " + columnName + " (Type: " + columnType + ")");
+
+                // Add format and examples using helper method
+                propertySchema = addExampleAndFormat(columnType, propertySchema);
 
                 properties.put(columnName, propertySchema);
             });
@@ -295,6 +397,16 @@ public class DynamicOpenApiService {
     private Map<String, Object> createErrorResponse(String description) {
         Map<String, Object> errorResponse = new HashMap<>();
         errorResponse.put("description", description);
+
+        // Add content with schema reference
+        Map<String, Object> content = new HashMap<>();
+        Map<String, Object> mediaType = new HashMap<>();
+        Map<String, Object> schema = new HashMap<>();
+        schema.put("$ref", "#/components/schemas/Error");
+        mediaType.put("schema", schema);
+        content.put("application/json", mediaType);
+        errorResponse.put("content", content);
+
         return errorResponse;
     }
 
@@ -304,16 +416,70 @@ public class DynamicOpenApiService {
         switch (columnType.toLowerCase()) {
             case "int":
             case "integer":
+            case "bigint":
+            case "smallint":
+            case "tinyint":
                 return "integer";
             case "double":
             case "float":
             case "decimal":
+            case "numeric":
+            case "real":
                 return "number";
             case "boolean":
             case "bool":
+            case "bit":
                 return "boolean";
+            case "date":
+            case "datetime":
+            case "timestamp":
+            case "time":
+                return "string";
+            case "text":
+            case "longtext":
+            case "mediumtext":
+            case "varchar":
+            case "char":
+            case "nvarchar":
+            case "nchar":
             default:
                 return "string";
         }
+    }
+
+    private Map<String, Object> addExampleAndFormat(String columnType, Map<String, Object> propertySchema) {
+        String openApiType = convertToOpenApiType(columnType);
+
+        switch (openApiType) {
+            case "integer":
+                propertySchema.put("format", "int32");
+                propertySchema.put("example", 123);
+                break;
+            case "number":
+                propertySchema.put("format", "double");
+                propertySchema.put("example", 123.45);
+                break;
+            case "boolean":
+                propertySchema.put("example", true);
+                break;
+            case "string":
+                if (columnType.toLowerCase().contains("date") || columnType.toLowerCase().contains("time")) {
+                    if (columnType.toLowerCase().equals("date")) {
+                        propertySchema.put("format", "date");
+                        propertySchema.put("example", "2023-12-25");
+                    } else if (columnType.toLowerCase().contains("datetime") || columnType.toLowerCase().contains("timestamp")) {
+                        propertySchema.put("format", "date-time");
+                        propertySchema.put("example", "2023-12-25T10:30:00Z");
+                    } else if (columnType.toLowerCase().equals("time")) {
+                        propertySchema.put("format", "time");
+                        propertySchema.put("example", "10:30:00");
+                    }
+                } else {
+                    propertySchema.put("example", "sample text");
+                }
+                break;
+        }
+
+        return propertySchema;
     }
 }
