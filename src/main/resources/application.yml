@@ -29,7 +29,7 @@ spring:
     oauth2:
       resource server:
         jwt:
-          issuer-uri: http://localhost:9090/realms/endora_api
+          issuer-uri: https://endora-oauth2.istad.co/realms/endora_api
 
   # Virtual Threads
   threads:

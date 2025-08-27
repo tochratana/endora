@@ -14,10 +14,12 @@ import rinsanom.com.springtwodatasoure.repository.postgrest.UserRepository;
 import rinsanom.com.springtwodatasoure.service.DynamicEndpointService;
 import rinsanom.com.springtwodatasoure.service.TableService;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.ArrayList;
 
 @Service
 @RequiredArgsConstructor
@@ -482,6 +484,217 @@ public class TableServiceImpl implements TableService {
             System.err.println("Error getting record with relations: " + e.getMessage());
             e.printStackTrace();
             throw new RuntimeException("Failed to get record with relations: " + e.getMessage(), e);
+        }
+    }
+
+    // Enhanced relationship management methods implementation
+    @Override
+    public List<TableSchema.TableRelationship> getTableRelationships(String schemaName, String projectId) {
+        try {
+            TableSchema tableSchema = getTableByNameAndProject(schemaName, projectId);
+            if (tableSchema == null) {
+                throw new RuntimeException("Table '" + schemaName + "' does not exist in project " + projectId);
+            }
+            return tableSchema.getRelationships() != null ? tableSchema.getRelationships() : new ArrayList<>();
+        } catch (Exception e) {
+            System.err.println("Error getting table relationships: " + e.getMessage());
+            throw new RuntimeException("Failed to get table relationships: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void addRelationshipToTable(String schemaName, String projectId, CreateTableWithRelationshipsDTO.TableRelationship relationship) {
+        try {
+            TableSchema tableSchema = getTableByNameAndProject(schemaName, projectId);
+            if (tableSchema == null) {
+                throw new RuntimeException("Table '" + schemaName + "' does not exist in project " + projectId);
+            }
+
+            // Validate that referenced table exists
+            TableSchema referencedTable = getTableByNameAndProject(relationship.getReferencedTable(), projectId);
+            if (referencedTable == null) {
+                throw new RuntimeException("Referenced table '" + relationship.getReferencedTable() + "' does not exist in project " + projectId);
+            }
+
+            // Initialize relationships list if null
+            if (tableSchema.getRelationships() == null) {
+                tableSchema.setRelationships(new ArrayList<>());
+            }
+
+            // Check if relationship already exists
+            boolean relationshipExists = tableSchema.getRelationships().stream()
+                .anyMatch(rel -> rel.getForeignKeyColumn().equals(relationship.getForeignKeyColumn()));
+
+            if (relationshipExists) {
+                throw new RuntimeException("Relationship with foreign key '" + relationship.getForeignKeyColumn() + "' already exists");
+            }
+
+            // Convert DTO to entity relationship
+            TableSchema.TableRelationship entityRel = new TableSchema.TableRelationship();
+            entityRel.setForeignKeyColumn(relationship.getForeignKeyColumn());
+            entityRel.setReferencedTable(relationship.getReferencedTable());
+            entityRel.setReferencedColumn(relationship.getReferencedColumn());
+            entityRel.setOnDelete(relationship.getOnDelete());
+            entityRel.setOnUpdate(relationship.getOnUpdate());
+
+            tableSchema.getRelationships().add(entityRel);
+            tableSchema.setUpdatedAt(LocalDateTime.now());
+            tableSchemaRepository.save(tableSchema);
+
+            System.out.println("Relationship added successfully to table '" + schemaName + "'");
+
+        } catch (Exception e) {
+            System.err.println("Error adding relationship to table: " + e.getMessage());
+            throw new RuntimeException("Failed to add relationship to table: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void removeRelationshipFromTable(String schemaName, String projectId, String foreignKeyColumn) {
+        try {
+            TableSchema tableSchema = getTableByNameAndProject(schemaName, projectId);
+            if (tableSchema == null) {
+                throw new RuntimeException("Table '" + schemaName + "' does not exist in project " + projectId);
+            }
+
+            if (tableSchema.getRelationships() == null || tableSchema.getRelationships().isEmpty()) {
+                throw new RuntimeException("No relationships found for table '" + schemaName + "'");
+            }
+
+            boolean removed = tableSchema.getRelationships().removeIf(rel ->
+                rel.getForeignKeyColumn().equals(foreignKeyColumn));
+
+            if (!removed) {
+                throw new RuntimeException("Relationship with foreign key '" + foreignKeyColumn + "' not found");
+            }
+
+            tableSchema.setUpdatedAt(LocalDateTime.now());
+            tableSchemaRepository.save(tableSchema);
+
+            System.out.println("Relationship removed successfully from table '" + schemaName + "'");
+
+        } catch (Exception e) {
+            System.err.println("Error removing relationship from table: " + e.getMessage());
+            throw new RuntimeException("Failed to remove relationship from table: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public List<Map<String, Object>> getRecordsWithJoins(String schemaName, String projectId, List<String> joinTables) {
+        try {
+            TableSchema tableSchema = getTableByNameAndProject(schemaName, projectId);
+            if (tableSchema == null) {
+                throw new RuntimeException("Table '" + schemaName + "' does not exist in project " + projectId);
+            }
+
+            List<TableData> records = tableDataRepository.findBySchemaNameAndProjectId(schemaName, projectId);
+            List<Map<String, Object>> result = new ArrayList<>();
+
+            for (TableData record : records) {
+                Map<String, Object> recordWithJoins = new HashMap<>(record.getData());
+                recordWithJoins.put("id", record.getId());
+                recordWithJoins.put("createdAt", record.getCreatedAt());
+                recordWithJoins.put("updatedAt", record.getUpdatedAt());
+
+                // Add joined data for each specified table
+                if (tableSchema.getRelationships() != null) {
+                    for (TableSchema.TableRelationship rel : tableSchema.getRelationships()) {
+                        if (joinTables.contains(rel.getReferencedTable())) {
+                            Object foreignKeyValue = record.getData().get(rel.getForeignKeyColumn());
+                            if (foreignKeyValue != null) {
+                                List<TableData> relatedRecords = tableDataRepository.findBySchemaNameAndProjectId(
+                                    rel.getReferencedTable(), projectId);
+
+                                Map<String, Object> relatedRecord = relatedRecords.stream()
+                                    .filter(data -> {
+                                        if ("id".equals(rel.getReferencedColumn())) {
+                                            return data.getId().equals(foreignKeyValue.toString());
+                                        } else {
+                                            Object referencedValue = data.getData().get(rel.getReferencedColumn());
+                                            return referencedValue != null && referencedValue.toString().equals(foreignKeyValue.toString());
+                                        }
+                                    })
+                                    .findFirst()
+                                    .map(data -> {
+                                        Map<String, Object> relData = new HashMap<>(data.getData());
+                                        relData.put("id", data.getId());
+                                        relData.put("createdAt", data.getCreatedAt());
+                                        relData.put("updatedAt", data.getUpdatedAt());
+                                        return relData;
+                                    })
+                                    .orElse(null);
+
+                                recordWithJoins.put(rel.getReferencedTable() + "_data", relatedRecord);
+                            }
+                        }
+                    }
+                }
+
+                result.add(recordWithJoins);
+            }
+
+            return result;
+
+        } catch (Exception e) {
+            System.err.println("Error getting records with joins: " + e.getMessage());
+            throw new RuntimeException("Failed to get records with joins: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public boolean validateRelationshipIntegrity(String schemaName, String projectId) {
+        try {
+            TableSchema tableSchema = getTableByNameAndProject(schemaName, projectId);
+            if (tableSchema == null) {
+                throw new RuntimeException("Table '" + schemaName + "' does not exist in project " + projectId);
+            }
+
+            if (tableSchema.getRelationships() == null || tableSchema.getRelationships().isEmpty()) {
+                return true; // No relationships to validate
+            }
+
+            List<TableData> records = tableDataRepository.findBySchemaNameAndProjectId(schemaName, projectId);
+
+            for (TableSchema.TableRelationship rel : tableSchema.getRelationships()) {
+                // Check if referenced table exists
+                TableSchema referencedTable = getTableByNameAndProject(rel.getReferencedTable(), projectId);
+                if (referencedTable == null) {
+                    System.err.println("Referenced table '" + rel.getReferencedTable() + "' does not exist");
+                    return false;
+                }
+
+                // Check referential integrity for all records
+                List<TableData> referencedRecords = tableDataRepository.findBySchemaNameAndProjectId(
+                    rel.getReferencedTable(), projectId);
+
+                for (TableData record : records) {
+                    Object foreignKeyValue = record.getData().get(rel.getForeignKeyColumn());
+                    if (foreignKeyValue != null) {
+                        boolean referenceExists = referencedRecords.stream()
+                            .anyMatch(refRecord -> {
+                                if ("id".equals(rel.getReferencedColumn())) {
+                                    return refRecord.getId().equals(foreignKeyValue.toString());
+                                } else {
+                                    Object referencedValue = refRecord.getData().get(rel.getReferencedColumn());
+                                    return referencedValue != null && referencedValue.toString().equals(foreignKeyValue.toString());
+                                }
+                            });
+
+                        if (!referenceExists) {
+                            System.err.println("Referential integrity violation: Record " + record.getId() +
+                                " references non-existent " + rel.getReferencedTable() + "." + rel.getReferencedColumn() +
+                                " with value " + foreignKeyValue);
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            return true;
+
+        } catch (Exception e) {
+            System.err.println("Error validating relationship integrity: " + e.getMessage());
+            return false;
         }
     }
 }

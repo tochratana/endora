@@ -15,7 +15,6 @@ import rinsanom.com.springtwodatasoure.entity.TableSchema;
 import rinsanom.com.springtwodatasoure.service.DynamicEndpointService;
 import rinsanom.com.springtwodatasoure.service.impl.TableServiceImpl;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -60,6 +59,41 @@ public class CreateTableController {
     @GetMapping
     public List<TableSchema> getAllTables() {
         return tableService.getAllTables();
+    }
+
+    @Operation(
+        summary = "Create a table with relationships",
+        description = "Creates a new table with schema and relationships in a single request"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Table with relationships created successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid request or table already exists")
+    })
+    @PostMapping("/with-relationships")
+    public ResponseEntity<Map<String, Object>> createTableWithRelationships(
+            @Parameter(description = "Table creation request with relationships") @RequestBody CreateTableWithRelationshipsDTO request) {
+        try {
+            tableService.createTableWithRelationshipsAndUserValidation(
+                request.getUserUuid(),
+                request.getProjectUuid(),
+                request.getSchemaName(),
+                request.getSchema(),
+                request.getRelationships()
+            );
+            return ResponseEntity.ok(Map.of(
+                "message", "Table with relationships created successfully",
+                "schemaName", request.getSchemaName(),
+                "projectUuid", request.getProjectUuid(),
+                "userUuid", request.getUserUuid(),
+                "relationshipsCount", request.getRelationships() != null ? request.getRelationships().size() : 0
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Failed to create table with relationships: " + e.getMessage(),
+                "schemaName", request.getSchemaName(),
+                "projectUuid", request.getProjectUuid()
+            ));
+        }
     }
 
     @Operation(
@@ -242,58 +276,149 @@ public class CreateTableController {
         }
     }
 
-    @Operation(summary = "Get related tables", description = "Retrieves tables that are related to the specified table")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Related tables found"),
-        @ApiResponse(responseCode = "404", description = "Table or project not found")
-    })
-    @GetMapping("/{schemaName}/relationships/project/{projectUuid}")
-    public ResponseEntity<List<TableSchema>> getRelatedTables(
-            @Parameter(description = "Schema name") @PathVariable String schemaName,
-            @Parameter(description = "Project UUID") @PathVariable String projectUuid) {
-        return ResponseEntity.ok(tableService.getRelatedTables(schemaName, projectUuid));
-    }
+    // Enhanced Relationship Management Endpoints
 
-    @Operation(summary = "Get table documentation", description = "Retrieves API documentation for a specific table")
+    @Operation(
+        summary = "Get table relationships",
+        description = "Retrieves all relationships defined for a specific table"
+    )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Documentation found"),
+        @ApiResponse(responseCode = "200", description = "Relationships retrieved successfully"),
         @ApiResponse(responseCode = "404", description = "Table not found")
     })
-    @GetMapping("/{schemaName}/docs")
-    public ResponseEntity<String> getTableDocumentation(
-            @Parameter(description = "Schema name") @PathVariable String schemaName) {
+    @GetMapping("/{schemaName}/project/{projectUuid}/relationships")
+    public ResponseEntity<Map<String, Object>> getTableRelationships(
+            @Parameter(description = "Schema name") @PathVariable String schemaName,
+            @Parameter(description = "Project UUID") @PathVariable String projectUuid) {
         try {
-            String docs = dynamicEndpointService.getEndpointDocumentation(schemaName);
-            return ResponseEntity.ok(docs);
+            List<TableSchema.TableRelationship> relationships = tableService.getTableRelationships(schemaName, projectUuid);
+            return ResponseEntity.ok(Map.of(
+                "schemaName", schemaName,
+                "projectUuid", projectUuid,
+                "relationships", relationships,
+                "count", relationships.size()
+            ));
         } catch (Exception e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Failed to get table relationships",
+                "message", e.getMessage()
+            ));
         }
     }
 
-    @Operation(summary = "Get all documentation", description = "Retrieves all generated API documentation")
-    @ApiResponse(responseCode = "200", description = "All documentation retrieved")
-    @GetMapping("/docs")
-    public ResponseEntity<Map<String, String>> getAllDocumentation() {
-        Map<String, String> allDocs = dynamicEndpointService.getAllEndpointDocumentation();
-        return ResponseEntity.ok(allDocs);
+    @Operation(
+        summary = "Add relationship to table",
+        description = "Adds a new foreign key relationship to an existing table"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Relationship added successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid relationship or table not found")
+    })
+    @PostMapping("/{schemaName}/project/{projectUuid}/relationships")
+    public ResponseEntity<Map<String, Object>> addRelationshipToTable(
+            @Parameter(description = "Schema name") @PathVariable String schemaName,
+            @Parameter(description = "Project UUID") @PathVariable String projectUuid,
+            @Parameter(description = "Relationship to add") @RequestBody CreateTableWithRelationshipsDTO.TableRelationship relationship) {
+        try {
+            tableService.addRelationshipToTable(schemaName, projectUuid, relationship);
+            return ResponseEntity.ok(Map.of(
+                "message", "Relationship added successfully",
+                "schemaName", schemaName,
+                "projectUuid", projectUuid,
+                "foreignKeyColumn", relationship.getForeignKeyColumn(),
+                "referencedTable", relationship.getReferencedTable()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Failed to add relationship to table",
+                "message", e.getMessage()
+            ));
+        }
     }
 
-    @Operation(summary = "Get record with relations", description = "Retrieves a record with all its related data")
+    @Operation(
+        summary = "Remove relationship from table",
+        description = "Removes a foreign key relationship from a table"
+    )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Record with relations found"),
+        @ApiResponse(responseCode = "200", description = "Relationship removed successfully"),
+        @ApiResponse(responseCode = "404", description = "Table or relationship not found")
+    })
+    @DeleteMapping("/{schemaName}/project/{projectUuid}/relationships/{foreignKeyColumn}")
+    public ResponseEntity<Map<String, Object>> removeRelationshipFromTable(
+            @Parameter(description = "Schema name") @PathVariable String schemaName,
+            @Parameter(description = "Project UUID") @PathVariable String projectUuid,
+            @Parameter(description = "Foreign key column name") @PathVariable String foreignKeyColumn) {
+        try {
+            tableService.removeRelationshipFromTable(schemaName, projectUuid, foreignKeyColumn);
+            return ResponseEntity.ok(Map.of(
+                "message", "Relationship removed successfully",
+                "schemaName", schemaName,
+                "projectUuid", projectUuid,
+                "foreignKeyColumn", foreignKeyColumn
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Failed to remove relationship from table",
+                "message", e.getMessage()
+            ));
+        }
+    }
+
+    @Operation(
+        summary = "Get records with joins",
+        description = "Retrieves records from a table with joined data from related tables"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Records with joins retrieved successfully"),
+        @ApiResponse(responseCode = "404", description = "Table not found")
+    })
+    @PostMapping("/{schemaName}/project/{projectUuid}/records-with-joins")
+    public ResponseEntity<Map<String, Object>> getRecordsWithJoins(
+            @Parameter(description = "Schema name") @PathVariable String schemaName,
+            @Parameter(description = "Project UUID") @PathVariable String projectUuid,
+            @Parameter(description = "List of tables to join") @RequestBody List<String> joinTables) {
+        try {
+            List<Map<String, Object>> records = tableService.getRecordsWithJoins(schemaName, projectUuid, joinTables);
+            return ResponseEntity.ok(Map.of(
+                "schemaName", schemaName,
+                "projectUuid", projectUuid,
+                "joinTables", joinTables,
+                "records", records,
+                "count", records.size()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Failed to get records with joins",
+                "message", e.getMessage()
+            ));
+        }
+    }
+
+    @Operation(
+        summary = "Get record with relations",
+        description = "Retrieves a specific record with all its related data"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Record with relations retrieved successfully"),
         @ApiResponse(responseCode = "404", description = "Record not found")
     })
-    @GetMapping("/{schemaName}/{id}/with-relations/project/{projectUuid}")
+    @GetMapping("/{schemaName}/project/{projectUuid}/record/{id}/with-relations")
     public ResponseEntity<Map<String, Object>> getRecordWithRelations(
             @Parameter(description = "Schema name") @PathVariable String schemaName,
-            @Parameter(description = "Record ID") @PathVariable String id,
-            @Parameter(description = "Project UUID") @PathVariable String projectUuid) {
+            @Parameter(description = "Project UUID") @PathVariable String projectUuid,
+            @Parameter(description = "Record ID") @PathVariable String id) {
         try {
-            Map<String, Object> recordWithRelations = tableService.getRecordWithRelations(schemaName, id, projectUuid);
-            if (recordWithRelations == null) {
+            Map<String, Object> record = tableService.getRecordWithRelations(schemaName, id, projectUuid);
+            if (record == null) {
                 return ResponseEntity.notFound().build();
             }
-            return ResponseEntity.ok(recordWithRelations);
+            return ResponseEntity.ok(Map.of(
+                "schemaName", schemaName,
+                "projectUuid", projectUuid,
+                "recordId", id,
+                "record", record
+            ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
                 "error", "Failed to get record with relations",
@@ -302,72 +427,57 @@ public class CreateTableController {
         }
     }
 
-    @Operation(summary = "Debug project tables", description = "Debug endpoint to troubleshoot project tables and relationships")
-    @ApiResponse(responseCode = "200", description = "Debug information returned")
-    @GetMapping("/debug/project/{projectUuid}")
-    public ResponseEntity<Map<String, Object>> debugProjectTables(
+    @Operation(
+        summary = "Get related tables",
+        description = "Retrieves all tables that have foreign key relationships to the specified table"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Related tables retrieved successfully"),
+        @ApiResponse(responseCode = "404", description = "Table not found")
+    })
+    @GetMapping("/{schemaName}/project/{projectUuid}/related-tables")
+    public ResponseEntity<Map<String, Object>> getRelatedTables(
+            @Parameter(description = "Schema name") @PathVariable String schemaName,
             @Parameter(description = "Project UUID") @PathVariable String projectUuid) {
         try {
-            List<TableSchema> allTables = tableService.getTablesByProjectId(projectUuid);
-
-            // Log debug information to server console only
-            System.out.println("DEBUG: Project " + projectUuid + " has " + allTables.size() + " tables");
-            for (TableSchema table : allTables) {
-                System.out.println("DEBUG: Table '" + table.getSchemaName() + "' has " +
-                    (table.getRelationships() != null ? table.getRelationships().size() : 0) + " relationships");
-
-                if (table.getRelationships() != null) {
-                    for (TableSchema.TableRelationship rel : table.getRelationships()) {
-                        System.out.println("DEBUG: - " + rel.getForeignKeyColumn() + " -> " +
-                            rel.getReferencedTable() + "." + rel.getReferencedColumn());
-                    }
-                }
-            }
-
-            // Return minimal response to frontend
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", "Debug information logged to server console");
-            response.put("tableCount", allTables.size());
-            response.put("timestamp", java.time.LocalDateTime.now().toString());
-
-            return ResponseEntity.ok(response);
+            List<TableSchema> relatedTables = tableService.getRelatedTables(projectUuid, schemaName);
+            return ResponseEntity.ok(Map.of(
+                "schemaName", schemaName,
+                "projectUuid", projectUuid,
+                "relatedTables", relatedTables,
+                "count", relatedTables.size()
+            ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
-                "error", "Failed to get debug info",
+                "error", "Failed to get related tables",
                 "message", e.getMessage()
             ));
         }
     }
 
     @Operation(
-        summary = "Create table with relationships",
-        description = "Creates a new table with defined relationships to other tables"
+        summary = "Validate relationship integrity",
+        description = "Validates that all foreign key relationships in a table maintain referential integrity"
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Table with relationships created successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid request or table already exists")
+        @ApiResponse(responseCode = "200", description = "Validation completed"),
+        @ApiResponse(responseCode = "400", description = "Validation failed")
     })
-    @PostMapping("/with-relationships")
-    public ResponseEntity<Map<String, Object>> createTableWithRelationships(
-            @Parameter(description = "Table creation request with relationships") @RequestBody CreateTableWithRelationshipsDTO request) {
+    @GetMapping("/{schemaName}/project/{projectUuid}/validate-integrity")
+    public ResponseEntity<Map<String, Object>> validateRelationshipIntegrity(
+            @Parameter(description = "Schema name") @PathVariable String schemaName,
+            @Parameter(description = "Project UUID") @PathVariable String projectUuid) {
         try {
-            tableService.createTableWithRelationshipsAndUserValidation(
-                request.getUserUuid(),
-                request.getProjectUuid(),
-                request.getSchemaName(),
-                request.getSchema(),
-                request.getRelationships()
-            );
+            boolean isValid = tableService.validateRelationshipIntegrity(schemaName, projectUuid);
             return ResponseEntity.ok(Map.of(
-                "message", "Table with relationships created successfully",
-                "schemaName", request.getSchemaName(),
-                "projectUuid", request.getProjectUuid(),
-                "userUuid", request.getUserUuid(),
-                "relationships", request.getRelationships() != null ? request.getRelationships().size() : 0
+                "schemaName", schemaName,
+                "projectUuid", projectUuid,
+                "isValid", isValid,
+                "message", isValid ? "All relationships are valid" : "Referential integrity violations found"
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
-                "error", "Failed to create table with relationships",
+                "error", "Failed to validate relationship integrity",
                 "message", e.getMessage()
             ));
         }
