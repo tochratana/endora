@@ -20,8 +20,10 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 import rinsanom.com.springtwodatasoure.dto.*;
 import rinsanom.com.springtwodatasoure.entity.OtpEntity;
+import rinsanom.com.springtwodatasoure.entity.PasswordResetTokenEntity;
 import rinsanom.com.springtwodatasoure.entity.User;
 import rinsanom.com.springtwodatasoure.repository.postgrest.OtpRepository;
+import rinsanom.com.springtwodatasoure.repository.postgrest.PasswordResetTokenRepository;
 import rinsanom.com.springtwodatasoure.repository.postgrest.UserRepository;
 import rinsanom.com.springtwodatasoure.service.AuthService;
 
@@ -38,6 +40,7 @@ public class AuthServiceImpl implements AuthService {
     private final Keycloak keycloak;
     private final UserRepository userRepository;
     private final OtpRepository otpRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final JavaMailSender mailSender;
 
     @Value("${keycloak.server-url:http://localhost:9090}")
@@ -175,8 +178,8 @@ public class AuthServiceImpl implements AuthService {
                     clientSecret
             );
 
-            // Get user info from Keycloak to check email verification
-            userKeycloak.tokenManager().getAccessToken(); // Validate credentials
+            // Get user info and access token from Keycloak
+            AccessTokenResponse tokenResponse = userKeycloak.tokenManager().getAccessToken();
             UserRepresentation userInfo = getUserInfo(loginRequest.usernameOrEmail());
 
             // Check if email is verified
@@ -185,20 +188,17 @@ public class AuthServiceImpl implements AuthService {
                         "Email not verified. Please verify your email before logging in.");
             }
 
-            // If email is verified, send OTP instead of returning tokens
-            OtpRequest otpRequest = new OtpRequest(userInfo.getEmail(), "LOGIN");
-            sendOtpInternal(otpRequest);
-
+            // Return tokens directly - no OTP required for login
             return LoginResponse.builder()
-                    .accessToken(null)
-                    .refreshToken(null)
+                    .accessToken(tokenResponse.getToken())
+                    .refreshToken(tokenResponse.getRefreshToken())
                     .tokenType("Bearer")
-                    .expiresIn(0)
+                    .expiresIn(tokenResponse.getExpiresIn())
                     .userId(userInfo.getId())
                     .username(userInfo.getUsername())
                     .email(userInfo.getEmail())
                     .emailVerified(userInfo.isEmailVerified())
-                    .message("OTP sent to your email. Please verify OTP to complete login.")
+                    .message("Login successful")
                     .build();
 
         } catch (ResponseStatusException e) {
@@ -209,7 +209,7 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
-    @Override
+    // Legacy OTP methods (kept for backward compatibility if needed)
     @Transactional
     public OtpResponse sendOtp(OtpRequest otpRequest) {
         try {
@@ -253,7 +253,6 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
-    @Override
     @Transactional
     public OtpVerificationResponse verifyOtp(OtpVerificationRequest verificationRequest) {
         try {
@@ -370,6 +369,190 @@ public class AuthServiceImpl implements AuthService {
             log.error("Failed to send verification email for user ID: {}", userId, e);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                     "Failed to send verification email: " + e.getMessage());
+        }
+    }
+
+    // Forgot Password functionality
+    @Override
+    @Transactional
+    public OtpResponse forgotPassword(String email) {
+        try {
+            log.info("Processing forgot password request for email: {}", email);
+
+            // Check if user exists with this email
+            UserRepresentation user = getUserInfoByEmail(email);
+            if (user == null) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with this email");
+            }
+
+            // Clean up expired OTPs
+            otpRepository.deleteExpiredOtps(LocalDateTime.now());
+
+            // Invalidate any existing unused OTPs for this email and purpose
+            otpRepository.markUsedByEmailAndPurpose(email, "FORGOT_PASSWORD");
+
+            // Generate 6-digit OTP
+            String otpCode = String.format("%06d", random.nextInt(999999));
+
+            // Save OTP to database with FORGOT_PASSWORD purpose
+            OtpEntity otpEntity = OtpEntity.builder()
+                    .email(email)
+                    .otpCode(otpCode)
+                    .purpose("FORGOT_PASSWORD")
+                    .createdAt(LocalDateTime.now())
+                    .expiresAt(LocalDateTime.now().plusMinutes(otpExpiryMinutes))
+                    .used(false)
+                    .attempts(0)
+                    .build();
+
+            OtpEntity savedOtp = otpRepository.save(otpEntity);
+
+            // Send OTP email for password reset
+            sendPasswordResetOtpEmail(email, otpCode);
+
+            return OtpResponse.builder()
+                    .message("Password reset OTP sent successfully")
+                    .otpId(savedOtp.getId().toString())
+                    .expiresIn(otpExpiryMinutes * 60L)
+                    .build();
+
+        } catch (Exception e) {
+            log.error("Failed to process forgot password for email: {}", email, e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Failed to send password reset OTP: " + e.getMessage());
+        }
+    }
+
+    @Override
+    @Transactional
+    public ForgotPasswordOtpResponse verifyForgotPasswordOtp(OtpVerificationRequest verificationRequest) {
+        try {
+            log.info("Verifying forgot password OTP for email: {}", verificationRequest.email());
+
+            // Find the OTP with FORGOT_PASSWORD purpose
+            Optional<OtpEntity> otpOptional = otpRepository.findTopByEmailAndPurposeAndUsedFalseOrderByCreatedAtDesc(
+                    verificationRequest.email(), "FORGOT_PASSWORD");
+
+            if (otpOptional.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No valid password reset OTP found");
+            }
+
+            OtpEntity otp = otpOptional.get();
+
+            // Check if OTP is expired
+            if (otp.getExpiresAt().isBefore(LocalDateTime.now())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password reset OTP has expired");
+            }
+
+            // Check attempts
+            if (otp.getAttempts() >= maxOtpAttempts) {
+                otp.setUsed(true);
+                otpRepository.save(otp);
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Maximum OTP attempts exceeded");
+            }
+
+            // Increment attempts
+            otp.setAttempts(otp.getAttempts() + 1);
+            otpRepository.save(otp);
+
+            // Verify OTP
+            if (!otp.getOtpCode().equals(verificationRequest.otp())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid password reset OTP");
+            }
+
+            // Mark OTP as used
+            otp.setUsed(true);
+            otpRepository.save(otp);
+
+            // Get user info
+            UserRepresentation userInfo = getUserInfoByEmail(verificationRequest.email());
+
+            // Clean up expired reset tokens
+            passwordResetTokenRepository.deleteExpiredTokens(LocalDateTime.now());
+
+            // Invalidate any existing reset tokens for this email
+            passwordResetTokenRepository.markUsedByEmail(verificationRequest.email());
+
+            // Generate a secure reset token
+            String resetToken = generateSecureToken();
+
+            // Save the reset token with 15-minute expiry
+            PasswordResetTokenEntity resetTokenEntity = PasswordResetTokenEntity.builder()
+                    .resetToken(resetToken)
+                    .email(verificationRequest.email())
+                    .userId(userInfo.getId())
+                    .createdAt(LocalDateTime.now())
+                    .expiresAt(LocalDateTime.now().plusMinutes(15)) // 15 minutes to reset password
+                    .used(false)
+                    .build();
+
+            passwordResetTokenRepository.save(resetTokenEntity);
+
+            return ForgotPasswordOtpResponse.builder()
+                    .verified(true)
+                    .message("OTP verified successfully. Use the reset token to set your new password.")
+                    .resetToken(resetToken)
+                    .tokenExpiresIn(15 * 60L) // 15 minutes in seconds
+                    .build();
+
+        } catch (ResponseStatusException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Failed to verify forgot password OTP for email: {}", verificationRequest.email(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Failed to verify password reset OTP: " + e.getMessage());
+        }
+    }
+
+    @Override
+    @Transactional
+    public String resetPasswordWithToken(String resetToken, String newPassword) {
+        try {
+            log.info("Resetting password with reset token");
+
+            // Clean up expired tokens
+            passwordResetTokenRepository.deleteExpiredTokens(LocalDateTime.now());
+
+            // Find the reset token
+            Optional<PasswordResetTokenEntity> tokenOptional = passwordResetTokenRepository
+                    .findByResetTokenAndUsedFalseAndExpiresAtAfter(resetToken, LocalDateTime.now());
+
+            if (tokenOptional.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Invalid or expired reset token. Please request a new password reset.");
+            }
+
+            PasswordResetTokenEntity tokenEntity = tokenOptional.get();
+
+            // Get user from Keycloak
+            UserRepresentation user = getUserInfoByEmail(tokenEntity.getEmail());
+            if (user == null) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+            }
+
+            // Reset password in Keycloak
+            UserResource userResource = keycloak.realm(realm).users().get(user.getId());
+
+            CredentialRepresentation newCredential = new CredentialRepresentation();
+            newCredential.setType(CredentialRepresentation.PASSWORD);
+            newCredential.setValue(newPassword);
+            newCredential.setTemporary(false);
+
+            userResource.resetPassword(newCredential);
+
+            // Mark token as used
+            tokenEntity.setUsed(true);
+            passwordResetTokenRepository.save(tokenEntity);
+
+            log.info("Password reset successfully for user: {}", tokenEntity.getEmail());
+            return "Password reset successfully";
+
+        } catch (ResponseStatusException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Failed to reset password with token", e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Failed to reset password: " + e.getMessage());
         }
     }
 
@@ -553,4 +736,29 @@ public class AuthServiceImpl implements AuthService {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to send OTP email");
         }
     }
+
+    private void sendPasswordResetOtpEmail(String email, String otp) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(email);
+            message.setSubject("Password Reset OTP");
+            message.setText("Your password reset OTP code is: " + otp +
+                          "\n\nThis code will expire in " + otpExpiryMinutes + " minutes." +
+                          "\n\nIf you did not request a password reset, please ignore this email.");
+
+            mailSender.send(message);
+            log.info("Password reset OTP email sent successfully to: {}", email);
+        } catch (Exception e) {
+            log.error("Failed to send password reset OTP email to: {}", email, e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to send password reset OTP email");
+        }
+    }
+
+    private String generateSecureToken() {
+        // Generate a secure random token for password reset
+        byte[] tokenBytes = new byte[32];
+        random.nextBytes(tokenBytes);
+        return java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes);
+    }
 }
+
