@@ -1,7 +1,7 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.5.4'
-    id 'io.spring.dependency-management' version '1.1.7'
+    id 'org.springframework.boot' version '3.2.0'
+    id 'io.spring.dependency-management' version '1.1.4'
 }
 
 group = 'rinsanom.com'
@@ -34,7 +34,7 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok:1.18.30'
 
     // Swagger/OpenAPI 3 dependencies - Updated version
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.11'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
 
     // Validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'
@@ -49,9 +49,24 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
     // Keycloak
     implementation 'org.keycloak:keycloak-admin-client:26.0.6'
-    implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
+    // Mail
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+    // WebClient
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+
+
 }
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+// Fix for Java compiler issues
+tasks.withType(JavaCompile) {
+    options.compilerArgs += [
+        '-parameters',
+        '--add-exports', 'jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED',
+        '--add-exports', 'jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED'
+    ]
 }
