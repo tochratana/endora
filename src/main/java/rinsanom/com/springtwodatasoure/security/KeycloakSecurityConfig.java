@@ -46,7 +46,7 @@ public class KeycloakSecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/products").hasAnyRole(ROLE_ADMIN)
 
                 // All other requests require authentication
-                .anyRequest().authenticated());
+                .anyRequest().permitAll());
 
         // Disable CSRF for API endpoints
         http.csrf(csrf -> csrf.disable());
