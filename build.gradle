@@ -48,6 +48,14 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
     // Keycloak
     implementation 'org.keycloak:keycloak-admin-client:26.0.6'
+
+    // mail verify  otp
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+
+    // WebClient
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+
 }
 
 tasks.named('test') {

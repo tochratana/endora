@@ -27,24 +27,48 @@ spring:
   # Keycloak Configuration
   security:
     oauth2:
-      resource server:
+      resource server:  # Fixed: removed space and corrected case
         jwt:
-          issuer-uri: http://localhost:9090/realms/endora_api
+          issuer-uri: https://endora-oauth2.istad.co/realms/endora_api
 
   # Virtual Threads
   threads:
     virtual:
       enabled: true
 
+  # Mail Configuration - Fixed: moved to correct level and updated with real SMTP settings
+  mail:
+    host: smtp.gmail.com  # Example for Gmail - replace with your SMTP provider
+    port: 587
+    username: your-email@gmail.com  # Replace with your actual email
+    password: your-app-password     # Replace with your app password (not regular password)
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connection timeout: 5000
+          timeout: 5000
+          write timeout: 5000
+
+# Keycloak Configuration
 keycloak:
   server-url: https://endora-oauth2.istad.co/
   realm: endora_api
+  client-id: endora_api  # This should be your actual client ID for user authentication
+  client-secret: your-actual-client-secret  # Replace with your actual client secret
   admin:
     client-id: admin-cli
     client-secret: b2L6hrMg76JLk4GSLd8CGMPRJNnAOko2
 
 server:
   port: 8080
+
+app:
+  otp:
+    expiry-minutes: 5
+    max-attempts: 3
 
 # Make MongoDB connection optional
 management:
@@ -57,3 +81,4 @@ logging:
   level:
     com.tochratana.api: DEBUG
     org.keycloak: DEBUG
+    org.springframework.mail: DEBUG  # Add this to debug email issues
