@@ -38,7 +38,19 @@ public interface TableService {
     // New methods for handling table relationships
     void createTableWithRelationships(String projectId, String tableName, Map<String, String> schema, List<CreateTableWithRelationshipsDTO.TableRelationship> relationships);
 
+    // Enhanced relationship management methods
     List<TableSchema> getRelatedTables(String projectId, String tableName);
 
     Map<String, Object> getRecordWithRelations(String tableName, String id, String projectId);
+
+    // New methods for relationship management
+    List<TableSchema.TableRelationship> getTableRelationships(String schemaName, String projectId);
+
+    void addRelationshipToTable(String schemaName, String projectId, CreateTableWithRelationshipsDTO.TableRelationship relationship);
+
+    void removeRelationshipFromTable(String schemaName, String projectId, String foreignKeyColumn);
+
+    List<Map<String, Object>> getRecordsWithJoins(String schemaName, String projectId, List<String> joinTables);
+
+    boolean validateRelationshipIntegrity(String schemaName, String projectId);
 }

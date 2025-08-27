@@ -13,8 +13,8 @@ import java.util.UUID;
 public class Projects {
     @Id
     private String id;
-    private String userUuid; // Changed from userId to userUuid
-    private String projectUuid; // Added project UUID
+    private String userUuid;
+    private String projectUuid;
     private String projectName;
     private String description;
 

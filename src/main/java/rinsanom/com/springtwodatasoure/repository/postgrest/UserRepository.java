@@ -10,8 +10,8 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Integer> {
-    // Custom query if you want to map UUID to a different field
-    @Query("SELECT u FROM User u WHERE u.keycloakUserId = :uuid")
+    // Fixed query to search by actual uuid field
+    @Query("SELECT u FROM User u WHERE u.uuid = :uuid")
     Optional<User> findByUuid(@Param("uuid") String uuid);
 
     // Standard method that works with existing entity
