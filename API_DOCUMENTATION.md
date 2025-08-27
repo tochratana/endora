@@ -27,7 +27,6 @@ All endpoints use base URL: `http://localhost:8080`
   "password": "securePassword123"
 }
 ```
-
 ### 2. Get All Users
 - **Method**: `GET`
 - **Endpoint**: `/user`
