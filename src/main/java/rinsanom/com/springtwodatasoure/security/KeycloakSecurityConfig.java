@@ -35,22 +35,28 @@ public class KeycloakSecurityConfig {
                 // Auth endpoints - permit all (make sure these are at the top)
                 .requestMatchers("/api/auth/**").permitAll()
 
+                // Test endpoints for debugging
+                .requestMatchers("/api/test/public").permitAll()
+                .requestMatchers("/api/test/protected").authenticated()
+                .requestMatchers("/api/test/user-only").hasAnyRole(ROLE_USER)
+
                 // Public endpoints
-               // .requestMatchers(HttpMethod.GET, "/api/users").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/users").hasAnyRole(ROLE_ADMIN)
 
-                // Protected endpoints that require authentication
-               // .requestMatchers("/projects/**").authenticated()
-               // .requestMatchers("/table/**").authenticated()
+                // Create Table role endpoints
+                .requestMatchers(HttpMethod.GET, "/table").hasAnyRole(ROLE_USER)
 
-                // User role endpoints
-              //  .requestMatchers(HttpMethod.GET, "/api/products").hasAnyRole(ROLE_USER)
+                // Endpoint role endpoints
+                .requestMatchers(HttpMethod.POST, "/api/endpoints").hasAnyRole(ROLE_USER)
 
-                // Admin role endpoints
-             //   .requestMatchers(HttpMethod.POST, "/api/users").hasAnyRole(ROLE_ADMIN)
-             //   .requestMatchers(HttpMethod.POST, "/api/products").hasAnyRole(ROLE_ADMIN)
+                // Swagger or postman for user
+                .requestMatchers(HttpMethod.POST, "/api/openapi").hasAnyRole(ROLE_USER)
+
+                // Project
+                .requestMatchers(HttpMethod.POST, "/projects").hasAnyRole(ROLE_USER)
 
                 // All other requests require authentication
-                .anyRequest().permitAll());
+                .anyRequest().authenticated());
 
         // Disable CSRF for API endpoints
         http.csrf(csrf -> csrf.disable());
@@ -72,16 +78,38 @@ public class KeycloakSecurityConfig {
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverterForKeycloak() {
         Converter<Jwt, Collection<GrantedAuthority>> jwtGrantedAuthoritiesConverter = jwt -> {
-            Map<String, Collection<String>> realmAccess = jwt.getClaim("realm_access");
-            Collection<String> roles = realmAccess != null ? realmAccess.get("roles") : null;
+            try {
+                // Log JWT claims for debugging
+                System.out.println("JWT Claims: " + jwt.getClaims());
+                System.out.println("JWT Subject: " + jwt.getSubject());
+                System.out.println("JWT Issuer: " + jwt.getIssuer());
 
-            if (roles == null) {
-                return java.util.Collections.emptyList();
+                // Try to get realm_access roles
+                Map<String, Collection<String>> realmAccess = jwt.getClaim("realm_access");
+                System.out.println("Realm Access: " + realmAccess);
+
+                Collection<String> roles = realmAccess != null ? realmAccess.get("roles") : null;
+                System.out.println("Extracted Roles: " + roles);
+
+                if (roles == null || roles.isEmpty()) {
+                    // If no realm roles, try resource_access or assign default role
+                    System.out.println("No realm roles found, assigning default USER role");
+                    return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+                }
+
+                Collection<GrantedAuthority> authorities = roles.stream()
+                        .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
+                        .collect(Collectors.toList());
+
+                System.out.println("Final Authorities: " + authorities);
+                return authorities;
+
+            } catch (Exception e) {
+                System.err.println("Error extracting roles from JWT: " + e.getMessage());
+                e.printStackTrace();
+                // Return default role on error
+                return List.of(new SimpleGrantedAuthority("ROLE_USER"));
             }
-
-            return roles.stream()
-                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-                    .collect(Collectors.toList());
         };
 
         JwtAuthenticationConverter jwtConverter = new JwtAuthenticationConverter();

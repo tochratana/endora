@@ -55,8 +55,8 @@ spring:
 keycloak:
   server-url: https://endora-oauth2.istad.co/
   realm: endora_api
-  client-id: admin-cli  # Add your actual client ID here
-  client-secret: b2L6hrMg76JLk4GSLd8CGMPRJNnAOko2
+  client-id: realm-management  # Try realm-management client
+  client-secret: ""   # Public clients don't need secrets
   admin:
     client-id: admin-cli
     client-secret: b2L6hrMg76JLk4GSLd8CGMPRJNnAOko2
