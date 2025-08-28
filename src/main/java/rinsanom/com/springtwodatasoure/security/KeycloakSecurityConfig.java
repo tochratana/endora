@@ -36,17 +36,22 @@ public class KeycloakSecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
 
                 // Public endpoints
-                .requestMatchers(HttpMethod.GET, "/api/users").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/users").hasAnyRole(ROLE_ADMIN)
 
-                // User role endpoints
-                .requestMatchers(HttpMethod.GET, "/api/products").hasAnyRole(ROLE_USER)
+                // Create Table role endpoints
+                .requestMatchers(HttpMethod.GET, "/table").hasAnyRole(ROLE_USER)
 
-                // Admin role endpoints
-                .requestMatchers(HttpMethod.POST, "/api/users").hasAnyRole(ROLE_ADMIN)
-                .requestMatchers(HttpMethod.POST, "/api/products").hasAnyRole(ROLE_ADMIN)
+                // Endpoint role endpoints
+                .requestMatchers(HttpMethod.POST, "/api/endpoints").hasAnyRole(ROLE_USER)
+
+                // Swagger or postman for user
+                .requestMatchers(HttpMethod.POST, "/api/openapi").hasAnyRole(ROLE_USER)
+
+                // Project
+                .requestMatchers(HttpMethod.POST, "/projects").hasAnyRole(ROLE_USER)
 
                 // All other requests require authentication
-                .anyRequest().permitAll());
+                .anyRequest().authenticated());
 
         // Disable CSRF for API endpoints
         http.csrf(csrf -> csrf.disable());
