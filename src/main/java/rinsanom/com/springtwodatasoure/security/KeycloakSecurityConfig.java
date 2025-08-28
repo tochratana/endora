@@ -35,20 +35,19 @@ public class KeycloakSecurityConfig {
                 // Auth endpoints - permit all (make sure these are at the top)
                 .requestMatchers("/api/auth/**").permitAll()
 
-                // Public endpoints
+                // Debug endpoints for testing (remove in production)
+                .requestMatchers("/api/debug/**").authenticated()
+                .requestMatchers("/api/debug/test-user-role").hasAnyRole(ROLE_USER)
+                .requestMatchers("/api/debug/test-admin-role").hasAnyRole(ROLE_ADMIN)
+
+                // Admin only endpoints
                 .requestMatchers(HttpMethod.GET, "/api/users").hasAnyRole(ROLE_ADMIN)
 
-                // Create Table role endpoints
-                .requestMatchers(HttpMethod.GET, "/table").hasAnyRole(ROLE_USER)
-
-                // Endpoint role endpoints
-                .requestMatchers(HttpMethod.POST, "/api/endpoints").hasAnyRole(ROLE_USER)
-
-                // Swagger or postman for user
-                .requestMatchers(HttpMethod.POST, "/api/openapi").hasAnyRole(ROLE_USER)
-
-                // Project
-                .requestMatchers(HttpMethod.POST, "/projects").hasAnyRole(ROLE_USER)
+                // User endpoints - allow any authenticated user for now
+                .requestMatchers(HttpMethod.GET, "/table").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/endpoints").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/openapi").authenticated()
+                .requestMatchers(HttpMethod.POST, "/projects").authenticated() // Changed to authenticated only
 
                 // All other requests require authentication
                 .anyRequest().authenticated());
