@@ -1,8 +1,8 @@
 spring:
   # PostgreSQL Configuration (for User entity)
   datasource:
-    url: jdbc:postgresql://localhost:5432/endora
-    username: oudom
+    url: jdbc:postgresql://localhost:5432/endora_db
+    username: tochratana
     password: 123
     driver-class-name: org.postgresql.Driver
 
@@ -20,7 +20,7 @@ spring:
     mongodb:
       host: localhost
       port: 27017
-      database: endora
+      database: Endora
       # username: your_mongo_username  # uncomment if auth enabled
       # password: your_mongo_password  # uncomment if auth enabled
 
