@@ -20,7 +20,7 @@ spring:
     mongodb:
       host: localhost
       port: 27017
-      database: spring-app
+      database:  spring-app
       # username: your_mongo_username  # uncomment if auth enabled
       # password: your_mongo_password  # uncomment if auth enabled
 
@@ -40,7 +40,7 @@ spring:
           timeout: 3000
           write timeout: 5000
 
-  # Keycloak Configuration
+  # Keycloak Configuration - FIXED: Match your actual Keycloak server
   security:
     oauth2:
       resource server:
@@ -55,8 +55,9 @@ spring:
 keycloak:
   server-url: https://endora-oauth2.istad.co/
   realm: endora_api
-  client-id: realm-management  # Try realm-management client
-  client-secret: ""   # Public clients don't need secrets
+  # FIXED: Use the correct client ID for login (not admin-cli)
+  client-id: spring-admin  # This should be your actual client for authentication
+  client-secret: uliUJohOY9OI1jM1SnFrog5iJ23JXWJN  # Get this from Keycloak
   admin:
     client-id: admin-cli
     client-secret: b2L6hrMg76JLk4GSLd8CGMPRJNnAOko2

@@ -7,13 +7,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import rinsanom.com.springtwodatasoure.dto.CreateTableRequestDTO;
 import rinsanom.com.springtwodatasoure.dto.CreateTableWithRelationshipsDTO;
 import rinsanom.com.springtwodatasoure.dto.InsertDataRequestDTO;
 import rinsanom.com.springtwodatasoure.entity.TableSchema;
+import rinsanom.com.springtwodatasoure.security.TokenUserService;
 import rinsanom.com.springtwodatasoure.service.DynamicEndpointService;
 import rinsanom.com.springtwodatasoure.service.impl.TableServiceImpl;
 
@@ -27,6 +26,7 @@ import java.util.Map;
 public class CreateTableController {
     private final TableServiceImpl tableService;
     private final DynamicEndpointService dynamicEndpointService;
+    private final TokenUserService tokenUserService;
 
     @Operation(
         summary = "Create a new table",
@@ -38,11 +38,10 @@ public class CreateTableController {
     })
     @PostMapping
     public ResponseEntity<Map<String, Object>> createTable(
-            @Parameter(description = "Table creation request") @RequestBody CreateTableRequestDTO request,
-            Authentication authentication) {
+            @Parameter(description = "Table creation request") @RequestBody CreateTableRequestDTO request) {
         try {
-            // Extract user UUID from JWT token
-            String userUuid = extractUserUuidFromToken(authentication);
+            // Extract user UUID from JWT token using centralized service
+            String userUuid = tokenUserService.getCurrentUserUuid();
 
             tableService.createTablesWithUserValidation(userUuid, request.getProjectUuid(), request.getSchemaName(), request.getSchema());
             return ResponseEntity.ok(Map.of(
@@ -77,11 +76,10 @@ public class CreateTableController {
     })
     @PostMapping("/with-relationships")
     public ResponseEntity<Map<String, Object>> createTableWithRelationships(
-            @Parameter(description = "Table creation request with relationships") @RequestBody CreateTableWithRelationshipsDTO request,
-            Authentication authentication) {
+            @Parameter(description = "Table creation request with relationships") @RequestBody CreateTableWithRelationshipsDTO request) {
         try {
-            // Extract user UUID from JWT token
-            String userUuid = extractUserUuidFromToken(authentication);
+            // Extract user UUID from JWT token using centralized service
+            String userUuid = tokenUserService.getCurrentUserUuid();
 
             tableService.createTableWithRelationshipsAndUserValidation(
                 userUuid,
@@ -103,21 +101,6 @@ public class CreateTableController {
                 "projectUuid", request.getProjectUuid()
             ));
         }
-    }
-
-    private String extractUserUuidFromToken(Authentication authentication) {
-        if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
-            // Try to get user UUID from different possible claims
-            String userUuid = jwt.getClaimAsString("sub"); // Standard subject claim
-            if (userUuid == null) {
-                userUuid = jwt.getClaimAsString("userId"); // Custom userId claim
-            }
-            if (userUuid == null) {
-                userUuid = jwt.getClaimAsString("user_uuid"); // Custom user_uuid claim
-            }
-            return userUuid;
-        }
-        throw new RuntimeException("Unable to extract user UUID from authentication token");
     }
 
     @Operation(
@@ -142,6 +125,9 @@ public class CreateTableController {
             @Parameter(description = "User UUID") @PathVariable String userUuid,
             @Parameter(description = "Data to insert") @RequestBody Map<String, Object> data) {
         try {
+            // Validate that the current user can access this user's data
+            tokenUserService.validateUserAccess(userUuid);
+
             tableService.insertDataWithUserValidation(userUuid, schemaName, projectUuid, data);
             return ResponseEntity.ok(Map.of(
                 "message", "Data inserted successfully",
@@ -151,8 +137,39 @@ public class CreateTableController {
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
-                "error", "Failed to insert data",
-                "message", e.getMessage()
+                "error", "Failed to insert data: " + e.getMessage(),
+                "schemaName", schemaName,
+                "projectUuid", projectUuid,
+                "userUuid", userUuid
+            ));
+        }
+    }
+
+    @Operation(
+        summary = "Insert data into current user's table",
+        description = "Inserts data into a table for the current authenticated user"
+    )
+    @PostMapping("/{schemaName}/project/{projectUuid}/data")
+    public ResponseEntity<Map<String, Object>> insertDataForCurrentUser(
+            @Parameter(description = "Schema name") @PathVariable String schemaName,
+            @Parameter(description = "Project UUID") @PathVariable String projectUuid,
+            @Parameter(description = "Data to insert") @RequestBody Map<String, Object> data) {
+        try {
+            // Get current user's UUID from token
+            String userUuid = tokenUserService.getCurrentUserUuid();
+
+            tableService.insertDataWithUserValidation(userUuid, schemaName, projectUuid, data);
+            return ResponseEntity.ok(Map.of(
+                "message", "Data inserted successfully",
+                "schemaName", schemaName,
+                "projectUuid", projectUuid,
+                "userUuid", userUuid
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Failed to insert data: " + e.getMessage(),
+                "schemaName", schemaName,
+                "projectUuid", projectUuid
             ));
         }
     }
@@ -179,11 +196,10 @@ public class CreateTableController {
     })
     @PostMapping("/data")
     public ResponseEntity<Map<String, Object>> insertData(
-            @Parameter(description = "Data insertion request") @RequestBody InsertDataRequestDTO request,
-            Authentication authentication) {
+            @Parameter(description = "Data insertion request") @RequestBody InsertDataRequestDTO request) {
         try {
-            // Extract user UUID from JWT token
-            String userUuid = extractUserUuidFromToken(authentication);
+            // Extract user UUID from JWT token using centralized service
+            String userUuid = tokenUserService.getCurrentUserUuid();
 
             tableService.insertDataWithUserValidation(userUuid, request.getSchemaName(), request.getProjectUuid(), request.getData());
             return ResponseEntity.ok(Map.of(

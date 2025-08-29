@@ -1,8 +1,8 @@
 {
 	"info": {
 		"_postman_id": "d3fcefe1-4cbd-4aa5-b75a-90e19e7c0989",
-		"name": "Endorav2",
-		"description": "Complete collection of all endpoints for the Spring Two DataSource application",
+		"name": "Endorav2 - Token-Based Security",
+		"description": "Complete collection of all endpoints for the Spring Two DataSource application with token-based security system",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "35058659",
 		"_collection_link": "https://dev-smos.postman.co/workspace/NestJs~60d57991-6416-45fe-85e1-5888dd088eb0/collection/35058659-d3fcefe1-4cbd-4aa5-b75a-90e19e7c0989?action=share&source=collection_link&creator=35058659"
@@ -27,14 +27,8 @@
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/auth/register",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"auth",
-								"register"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "register"]
 						}
 					},
 					"response": []
@@ -50,10 +44,11 @@
 									"    var jsonData = pm.response.json();",
 									"    pm.environment.set(\"authToken\", jsonData.accessToken);",
 									"    pm.environment.set(\"refreshToken\", jsonData.refreshToken);",
-									"    pm.environment.set(\"userUuid\", jsonData.userId);",
+									"    pm.environment.set(\"keycloakUserId\", jsonData.userId);",
 									"    pm.environment.set(\"username\", jsonData.username);",
 									"    pm.environment.set(\"email\", jsonData.email);",
-									"    console.log(\"Tokens saved to environment variables\");",
+									"    console.log(\"Tokens and user info saved to environment variables\");",
+									"    console.log(\"Keycloak User ID: \" + jsonData.userId);",
 									"}"
 								],
 								"type": "text/javascript"
@@ -74,146 +69,67 @@
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/auth/login",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"auth",
-								"login"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "login"]
 						}
 					},
 					"response": []
-				},
+				}
+			]
+		},
+		{
+			"name": "Debug & Testing",
+			"item": [
 				{
-					"name": "Verify Email",
+					"name": "Get Token Info",
 					"request": {
-						"method": "POST",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/auth/verify/{{userUuid}}",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"auth",
-								"verify",
-								"{{userUuid}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Sent OTP",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"email\": \"string\",\n  \"otp\": \"string\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
 							}
-						},
+						],
 						"url": {
-							"raw": "{{baseUrl}}/api/auth/verify-otp",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"auth",
-								"verify-otp"
-							]
+							"raw": "{{baseUrl}}/api/debug/token-info",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "debug", "token-info"]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Forgot Password",
+					"name": "Test User Role",
 					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"email\": \"string\",\n  \"otp\": \"string\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
 							}
-						},
+						],
 						"url": {
-							"raw": "{{baseUrl}}/api/auth/verify-otp",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"auth",
-								"verify-otp"
-							]
+							"raw": "{{baseUrl}}/api/debug/test-user-role",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "debug", "test-user-role"]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "verify-otp-forgot-password",
+					"name": "Test Admin Role",
 					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"email\": \"rinsanom3@gmail.com\",\n  \"otp\": \"280875\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
 							}
-						},
+						],
 						"url": {
-							"raw": "{{baseUrl}}/api/auth/verify-forgot-password-otp",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"auth",
-								"verify-forgot-password-otp"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "reset-password",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"email\": \"rinsanom3@gmail.com\",\n  \"otp\": \"280875\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/auth/verify-forgot-password-otp",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"auth",
-								"verify-forgot-password-otp"
-							]
+							"raw": "{{baseUrl}}/api/debug/test-admin-role",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "debug", "test-admin-role"]
 						}
 					},
 					"response": []
@@ -235,14 +151,8 @@
 						],
 						"url": {
 							"raw": "{{baseUrl}}/api/users/profile",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"users",
-								"profile"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "users", "profile"]
 						}
 					},
 					"response": []
@@ -267,51 +177,44 @@
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/users/profile",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"users",
-								"profile"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "users", "profile"]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Get All Users",
+					"name": "Get All Users (Admin)",
 					"request": {
 						"method": "GET",
-						"header": [],
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
 						"url": {
 							"raw": "{{baseUrl}}/api/users",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"users"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "users"]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Delete User",
+					"name": "Delete User (Admin)",
 					"request": {
 						"method": "DELETE",
-						"header": [],
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
 						"url": {
-							"raw": "{{baseUrl}}/api/users/{{userUuid}}",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"users",
-								"{{userUuid}}"
-							]
+							"raw": "{{baseUrl}}/api/users/{{keycloakUserId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "users", "{{keycloakUserId}}"]
 						}
 					},
 					"response": []
@@ -322,7 +225,22 @@
 			"name": "Project Management",
 			"item": [
 				{
-					"name": "Create Project",
+					"name": "Create Project (Token-Based)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"projectUuid\", jsonData.projectUuid);",
+									"    console.log(\"Project UUID saved: \" + jsonData.projectUuid);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
 						"header": [
@@ -337,16 +255,30 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"projectName\": \"My New Project\",\n  \"description\": \"Project description\"\n}"
+							"raw": "{\n  \"projectName\": \"My Token-Based Project\",\n  \"description\": \"Project created using token-based authentication\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/projects",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"projects"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["projects"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get My Projects (Token-Based)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/projects/my-projects",
+							"host": ["{{baseUrl}}"],
+							"path": ["projects", "my-projects"]
 						}
 					},
 					"response": []
@@ -355,33 +287,16 @@
 					"name": "Get All Projects",
 					"request": {
 						"method": "GET",
-						"header": [],
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
 						"url": {
 							"raw": "{{baseUrl}}/projects",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"projects"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get Project by ID",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/projects/{{projectId}}",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"projects",
-								"{{projectId}}"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["projects"]
 						}
 					},
 					"response": []
@@ -390,55 +305,34 @@
 					"name": "Get Project by UUID",
 					"request": {
 						"method": "GET",
-						"header": [],
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
 						"url": {
 							"raw": "{{baseUrl}}/projects/uuid/{{projectUuid}}",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"projects",
-								"uuid",
-								"{{projectUuid}}"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["projects", "uuid", "{{projectUuid}}"]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Get Projects by User UUID",
+					"name": "Get Projects by User UUID (Validated)",
 					"request": {
 						"method": "GET",
-						"header": [],
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
 						"url": {
 							"raw": "{{baseUrl}}/projects/user/{{userUuid}}",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"projects",
-								"user",
-								"{{userUuid}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get Project with User",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/projects/{{projectId}}/with-user",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"projects",
-								"{{projectId}}",
-								"with-user"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["projects", "user", "{{userUuid}}"]
 						}
 					},
 					"response": []
@@ -447,16 +341,16 @@
 					"name": "Delete Project",
 					"request": {
 						"method": "DELETE",
-						"header": [],
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
 						"url": {
 							"raw": "{{baseUrl}}/projects/{{projectId}}",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"projects",
-								"{{projectId}}"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["projects", "{{projectId}}"]
 						}
 					},
 					"response": []
@@ -467,226 +361,22 @@
 			"name": "Table Management",
 			"item": [
 				{
-					"name": "Table With Relation",
-					"item": [
+					"name": "Create Table (Token-Based)",
+					"event": [
 						{
-							"name": "Create Table with Relationships",
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									},
-									{
-										"key": "Authorization",
-										"value": "Bearer {{authToken}}"
-									}
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"schemaName\", jsonData.schemaName);",
+									"    console.log(\"Table created: \" + jsonData.schemaName);",
+									"}"
 								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"projectUuid\": \"{{projectUuid}}\",\n  \"schemaName\": \"orders\",\n  \"schema\": {\n    \"customer_id\": \"VARCHAR(255)\",\n    \"product_id\": \"VARCHAR(255)\",\n    \"quantity\": \"Integer\",\n    \"total_amount\": \"Double\",\n    \"order_date\": \"VARCHAR(255)\"\n  },\n  \"relationships\": [\n    {\n      \"foreignKeyColumn\": \"users_id\",\n      \"referencedTable\": \"users\",\n      \"referencedColumn\": \"id\",\n      \"onDelete\": \"CASCADE\",\n      \"onUpdate\": \"CASCADE\"\n    }\n  ]\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{baseUrl}}/table/with-relationships",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"table",
-										"with-relationships"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Get Table Relationships",
-							"request": {
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{baseUrl}}/table/{{schemaName}}/project/{{projectUuid}}/relationships",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"table",
-										"{{schemaName}}",
-										"project",
-										"{{projectUuid}}",
-										"relationships"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Add Relationship to Existing Table",
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"foreignKeyColumn\": \"category_id\",\n  \"referencedTable\": \"categories\",\n  \"referencedColumn\": \"id\",\n  \"onDelete\": \"SET NULL\",\n  \"onUpdate\": \"CASCADE\"\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{baseUrl}}/table/{{schemaName}}/project/{{projectUuid}}/relationships",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"table",
-										"{{schemaName}}",
-										"project",
-										"{{projectUuid}}",
-										"relationships"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Remove Relationship from Table",
-							"request": {
-								"method": "DELETE",
-								"header": [],
-								"url": {
-									"raw": "{{baseUrl}}/table/{{schemaName}}/project/{{projectUuid}}/relationships/{{foreignKeyColumn}}",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"table",
-										"{{schemaName}}",
-										"project",
-										"{{projectUuid}}",
-										"relationships",
-										"{{foreignKeyColumn}}"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Get Record with All Relations",
-							"request": {
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{baseUrl}}/table/{{schemaName}}/project/{{projectUuid}}/record/{{recordId}}/with-relations",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"table",
-										"{{schemaName}}",
-										"project",
-										"{{projectUuid}}",
-										"record",
-										"{{recordId}}",
-										"with-relations"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Get Records with Joins",
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "[\"customers\", \"products\"]",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{baseUrl}}/table/{{schemaName}}/project/{{projectUuid}}/records-with-joins",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"table",
-										"{{schemaName}}",
-										"project",
-										"{{projectUuid}}",
-										"records-with-joins"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Get Related Tables",
-							"request": {
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{baseUrl}}/table/{{schemaName}}/project/{{projectUuid}}/related-tables",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"table",
-										"{{schemaName}}",
-										"project",
-										"{{projectUuid}}",
-										"related-tables"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Validate Relationship Integrity",
-							"request": {
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{baseUrl}}/table/{{schemaName}}/project/{{projectUuid}}/validate-integrity",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"table",
-										"{{schemaName}}",
-										"project",
-										"{{projectUuid}}",
-										"validate-integrity"
-									]
-								}
-							},
-							"response": []
+								"type": "text/javascript"
+							}
 						}
-					]
-				},
-				{
-					"name": "Create Table",
+					],
 					"request": {
 						"method": "POST",
 						"header": [
@@ -701,16 +391,90 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"projectUuid\": \"{{projectUuid}}\",\n  \"schemaName\": \"users\",\n  \"schema\": {\n    \"name\": \"VARCHAR(255)\",\n    \"email\": \"VARCHAR(255)\",\n    \"age\": \"INT\"\n  }\n}"
+							"raw": "{\n  \"projectUuid\": \"{{projectUuid}}\",\n  \"schemaName\": \"users\",\n  \"schema\": {\n    \"name\": \"VARCHAR(255)\",\n    \"email\": \"VARCHAR(255)\",\n    \"age\": \"Integer\",\n    \"created_at\": \"VARCHAR(255)\"\n  }\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/table",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"table"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["table"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Table with Relationships (Token-Based)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"projectUuid\": \"{{projectUuid}}\",\n  \"schemaName\": \"orders\",\n  \"schema\": {\n    \"customer_id\": \"VARCHAR(255)\",\n    \"product_id\": \"VARCHAR(255)\",\n    \"quantity\": \"Integer\",\n    \"total_amount\": \"Double\",\n    \"order_date\": \"VARCHAR(255)\"\n  },\n  \"relationships\": [\n    {\n      \"foreignKeyColumn\": \"customer_id\",\n      \"referencedTable\": \"users\",\n      \"referencedColumn\": \"id\",\n      \"onDelete\": \"CASCADE\",\n      \"onUpdate\": \"CASCADE\"\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/table/with-relationships",
+							"host": ["{{baseUrl}}"],
+							"path": ["table", "with-relationships"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Insert Data (Current User)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"age\": 30,\n  \"created_at\": \"2024-01-01\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/table/{{schemaName}}/project/{{projectUuid}}/data",
+							"host": ["{{baseUrl}}"],
+							"path": ["table", "{{schemaName}}", "project", "{{projectUuid}}", "data"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Insert Data via Request Body (Token-Based)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"schemaName\": \"{{schemaName}}\",\n  \"projectUuid\": \"{{projectUuid}}\",\n  \"data\": {\n    \"name\": \"Jane Smith\",\n    \"email\": \"jane@example.com\",\n    \"age\": 25,\n    \"created_at\": \"2024-01-02\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/table/data",
+							"host": ["{{baseUrl}}"],
+							"path": ["table", "data"]
 						}
 					},
 					"response": []
@@ -719,15 +483,16 @@
 					"name": "Get All Tables",
 					"request": {
 						"method": "GET",
-						"header": [],
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
 						"url": {
 							"raw": "{{baseUrl}}/table",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"table"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["table"]
 						}
 					},
 					"response": []
@@ -736,119 +501,16 @@
 					"name": "Get Tables by Project",
 					"request": {
 						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/table/project/{{projectUuid}}",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"table",
-								"project",
-								"{{projectUuid}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get Table by Name and Project",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/table/{{schemaName}}/project/{{projectUuid}}",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"table",
-								"{{schemaName}}",
-								"project",
-								"{{projectUuid}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Insert Data with Path Params",
-					"request": {
-						"method": "POST",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"age\": 30,\n  \"isActive\": true\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/table/{{schemaName}}/project/{{projectUuid}}/user/{{userUuid}}/data",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"table",
-								"{{schemaName}}",
-								"project",
-								"{{projectUuid}}",
-								"user",
-								"{{userUuid}}",
-								"data"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Insert Data with Body",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
 							{
 								"key": "Authorization",
 								"value": "Bearer {{authToken}}"
 							}
 						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"projectUuid\": \"{{projectUuid}}\",\n  \"schemaName\": \"{{schemaName}}\",\n  \"data\": {\n    \"users_id\": \"7\",\n    \"product_id\": \"1\",\n    \"quantity\": 25,\n    \"total_amount\": 150.75,\n    \"order_date\" : \"2025-02-02\"\n  }\n}"
-						},
 						"url": {
-							"raw": "{{baseUrl}}/table/data",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"table",
-								"data"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get All Data from Table",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/table/{{schemaName}}/data",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"table",
-								"{{schemaName}}",
-								"data"
-							]
+							"raw": "{{baseUrl}}/table/project/{{projectUuid}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["table", "project", "{{projectUuid}}"]
 						}
 					},
 					"response": []
@@ -857,19 +519,16 @@
 					"name": "Get Table Data by Project",
 					"request": {
 						"method": "GET",
-						"header": [],
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
 						"url": {
 							"raw": "{{baseUrl}}/table/{{schemaName}}/data/project/{{projectUuid}}",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"table",
-								"{{schemaName}}",
-								"data",
-								"project",
-								"{{projectUuid}}"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["table", "{{schemaName}}", "data", "project", "{{projectUuid}}"]
 						}
 					},
 					"response": []
@@ -878,19 +537,16 @@
 					"name": "Get Record by ID",
 					"request": {
 						"method": "GET",
-						"header": [],
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
 						"url": {
 							"raw": "{{baseUrl}}/table/{{schemaName}}/{{recordId}}/project/{{projectUuid}}",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"table",
-								"{{schemaName}}",
-								"{{recordId}}",
-								"project",
-								"{{projectUuid}}"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["table", "{{schemaName}}", "{{recordId}}", "project", "{{projectUuid}}"]
 						}
 					},
 					"response": []
@@ -903,24 +559,20 @@
 							{
 								"key": "Content-Type",
 								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"Updated Name\",\n  \"email\": \"updated@example.com\",\n  \"age\": 35,\n  \"isActive\": false\n}"
+							"raw": "{\n  \"name\": \"Updated Name\",\n  \"email\": \"updated@example.com\",\n  \"age\": 35\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/table/{{schemaName}}/{{recordId}}/project/{{projectUuid}}",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"table",
-								"{{schemaName}}",
-								"{{recordId}}",
-								"project",
-								"{{projectUuid}}"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["table", "{{schemaName}}", "{{recordId}}", "project", "{{projectUuid}}"]
 						}
 					},
 					"response": []
@@ -929,77 +581,109 @@
 					"name": "Delete Record by ID",
 					"request": {
 						"method": "DELETE",
-						"header": [],
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
 						"url": {
 							"raw": "{{baseUrl}}/table/{{schemaName}}/{{recordId}}/project/{{projectUuid}}",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"table",
-								"{{schemaName}}",
-								"{{recordId}}",
-								"project",
-								"{{projectUuid}}"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["table", "{{schemaName}}", "{{recordId}}", "project", "{{projectUuid}}"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Table Relationships",
+			"item": [
+				{
+					"name": "Get Table Relationships",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/table/{{schemaName}}/project/{{projectUuid}}/relationships",
+							"host": ["{{baseUrl}}"],
+							"path": ["table", "{{schemaName}}", "project", "{{projectUuid}}", "relationships"]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Get Related Tables",
+					"name": "Add Relationship to Table",
 					"request": {
-						"method": "GET",
-						"header": [],
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"foreignKeyColumn\": \"customer_id\",\n  \"referencedTable\": \"users\",\n  \"referencedColumn\": \"id\",\n  \"onDelete\": \"CASCADE\",\n  \"onUpdate\": \"CASCADE\"\n}"
+						},
 						"url": {
-							"raw": "{{baseUrl}}/table/{{schemaName}}/relationships/project/{{projectUuid}}",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"table",
-								"{{schemaName}}",
-								"relationships",
-								"project",
-								"{{projectUuid}}"
-							]
+							"raw": "{{baseUrl}}/table/{{schemaName}}/project/{{projectUuid}}/relationships",
+							"host": ["{{baseUrl}}"],
+							"path": ["table", "{{schemaName}}", "project", "{{projectUuid}}", "relationships"]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Get Table Documentation",
+					"name": "Remove Relationship from Table",
 					"request": {
-						"method": "GET",
-						"header": [],
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
 						"url": {
-							"raw": "{{baseUrl}}/table/{{schemaName}}/docs",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"table",
-								"{{schemaName}}",
-								"docs"
-							]
+							"raw": "{{baseUrl}}/table/{{schemaName}}/project/{{projectUuid}}/relationships/{{foreignKeyColumn}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["table", "{{schemaName}}", "project", "{{projectUuid}}", "relationships", "{{foreignKeyColumn}}"]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Get All Documentation",
+					"name": "Get Records with Joins",
 					"request": {
-						"method": "GET",
-						"header": [],
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\"users\", \"orders\"]"
+						},
 						"url": {
-							"raw": "{{baseUrl}}/table/docs",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"table",
-								"docs"
-							]
+							"raw": "{{baseUrl}}/table/{{schemaName}}/project/{{projectUuid}}/records-with-joins",
+							"host": ["{{baseUrl}}"],
+							"path": ["table", "{{schemaName}}", "project", "{{projectUuid}}", "records-with-joins"]
 						}
 					},
 					"response": []
@@ -1008,256 +692,53 @@
 					"name": "Get Record with Relations",
 					"request": {
 						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/table/{{schemaName}}/{{recordId}}/with-relations/project/{{projectUuid}}",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"table",
-								"{{schemaName}}",
-								"{{recordId}}",
-								"with-relations",
-								"project",
-								"{{projectUuid}}"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Dynamic Table API",
-			"item": [
-				{
-					"name": "Get All Records from Table",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/tables/{{schemaName}}",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"tables",
-								"{{schemaName}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Create Record in Table",
-					"request": {
-						"method": "POST",
 						"header": [
 							{
-								"key": "Content-Type",
-								"value": "application/json"
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
 							}
 						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"projectId\": \"{{projectUuid}}\",\n  \"name\": \"Dynamic Record\",\n  \"email\": \"dynamic@example.com\",\n  \"age\": 28,\n  \"isActive\": true\n}"
-						},
 						"url": {
-							"raw": "{{baseUrl}}/api/tables/{{schemaName}}",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"tables",
-								"{{schemaName}}"
-							]
+							"raw": "{{baseUrl}}/table/{{schemaName}}/project/{{projectUuid}}/record/{{recordId}}/with-relations",
+							"host": ["{{baseUrl}}"],
+							"path": ["table", "{{schemaName}}", "project", "{{projectUuid}}", "record", "{{recordId}}", "with-relations"]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Get Record by ID (Dynamic)",
+					"name": "Get Related Tables",
 					"request": {
 						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/tables/{{schemaName}}/{{recordId}}",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"tables",
-								"{{schemaName}}",
-								"{{recordId}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update Record by ID (Dynamic)",
-					"request": {
-						"method": "PUT",
 						"header": [
 							{
-								"key": "Content-Type",
-								"value": "application/json"
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
 							}
 						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"Updated Dynamic Record\",\n  \"email\": \"updated.dynamic@example.com\",\n  \"age\": 32,\n  \"isActive\": false\n}"
-						},
 						"url": {
-							"raw": "{{baseUrl}}/api/tables/{{schemaName}}/{{recordId}}",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"tables",
-								"{{schemaName}}",
-								"{{recordId}}"
-							]
+							"raw": "{{baseUrl}}/table/{{schemaName}}/project/{{projectUuid}}/related-tables",
+							"host": ["{{baseUrl}}"],
+							"path": ["table", "{{schemaName}}", "project", "{{projectUuid}}", "related-tables"]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Delete Record by ID (Dynamic)",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/tables/{{schemaName}}/{{recordId}}",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"tables",
-								"{{schemaName}}",
-								"{{recordId}}"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Dynamic Endpoints",
-			"item": [
-				{
-					"name": "Get All Endpoint Documentation",
+					"name": "Validate Relationship Integrity",
 					"request": {
 						"method": "GET",
-						"header": [],
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
 						"url": {
-							"raw": "{{baseUrl}}/api/endpoints/docs",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"endpoints",
-								"docs"
-							]
+							"raw": "{{baseUrl}}/table/{{schemaName}}/project/{{projectUuid}}/validate-integrity",
+							"host": ["{{baseUrl}}"],
+							"path": ["table", "{{schemaName}}", "project", "{{projectUuid}}", "validate-integrity"]
 						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get Endpoint Documentation for Table",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/endpoints/docs/{{schemaName}}",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"endpoints",
-								"docs",
-								"{{schemaName}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Generate Endpoints for Table",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/endpoints/generate/{{schemaName}}/project/{{projectUuid}}",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"endpoints",
-								"generate",
-								"{{schemaName}}",
-								"project",
-								"{{projectUuid}}"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "OpenAPI Documentation",
-			"item": [
-				{
-					"name": "Get OpenAPI Specification",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/openapi/project/{{projectId}}",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"openapi",
-								"project",
-								"{{projectId}}"
-							]
-						},
-						"description": "Generate OpenAPI specification for a specific project"
-					},
-					"response": []
-				},
-				{
-					"name": "Download Postman Collection",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/openapi/project/{{projectId}}/postman",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"openapi",
-								"project",
-								"{{projectId}}",
-								"postman"
-							]
-						},
-						"description": "Download generated Postman collection for a specific project"
 					},
 					"response": []
 				}
@@ -1270,42 +751,10 @@
 			"script": {
 				"type": "text/javascript",
 				"exec": [
-					"// Auto-fill authorization token for protected endpoints",
+					"// Auto-refresh token if needed",
 					"const authToken = pm.environment.get('authToken');",
-					"",
-					"// List of endpoints that require authentication",
-					"const protectedEndpoints = [",
-					"    '/projects',",
-					"    '/table',",
-					"    '/api/users/profile'",
-					"];",
-					"",
-					"// Check if current request needs authentication",
-					"const requestUrl = pm.request.url.toString();",
-					"const needsAuth = protectedEndpoints.some(endpoint => ",
-					"    requestUrl.includes(endpoint) && !requestUrl.includes('/api/auth/')",
-					");",
-					"",
-					"// Auto-set Authorization header if token exists and endpoint needs auth",
-					"if (needsAuth && authToken && authToken !== 'your-auth-token') {",
-					"    pm.request.headers.add({",
-					"        key: 'Authorization',",
-					"        value: `Bearer ${authToken}`",
-					"    });",
-					"    ",
-					"    console.log('✅ Authorization header automatically set for protected endpoint');",
-					"} else if (needsAuth && (!authToken || authToken === 'your-auth-token')) {",
-					"    console.log('⚠️  Warning: This endpoint requires authentication. Please login first.');",
-					"    console.log('💡 Tip: Run the \"Login\" request first to get an auth token.');",
-					"} else {",
-					"    console.log('ℹ️  Public endpoint - no authentication required');",
-					"}",
-					"",
-					"// Display current auth status",
-					"if (authToken && authToken !== 'your-auth-token') {",
-					"    console.log(`🔐 Auth Token Status: Active (${authToken.substring(0, 20)}...)`);",
-					"} else {",
-					"    console.log('🔓 Auth Token Status: Not set or default value');",
+					"if (!authToken) {",
+					"    console.log('No auth token found. Please login first.');",
 					"}"
 				]
 			}
@@ -1315,69 +764,12 @@
 			"script": {
 				"type": "text/javascript",
 				"exec": [
-					"// Global test script for all requests",
-					"",
-					"// Log response status and time",
-					"console.log(`📊 Response Status: ${pm.response.code} - ${pm.response.status}`);",
-					"console.log(`⏱️  Response Time: ${pm.response.responseTime}ms`);",
-					"",
-					"// Auto-save tokens from login response",
-					"if (pm.info.requestName === 'Login' && pm.response.code === 200) {",
-					"    try {",
-					"        const responseJson = pm.response.json();",
-					"        ",
-					"        if (responseJson.accessToken) {",
-					"            pm.environment.set('authToken', responseJson.accessToken);",
-					"            console.log('✅ Access token automatically saved to environment');",
-					"        }",
-					"        ",
-					"        if (responseJson.refreshToken) {",
-					"            pm.environment.set('refreshToken', responseJson.refreshToken);",
-					"            console.log('✅ Refresh token automatically saved to environment');",
-					"        }",
-					"        ",
-					"        if (responseJson.userId) {",
-					"            pm.environment.set('userUuid', responseJson.userId);",
-					"            console.log('✅ User UUID automatically saved to environment');",
-					"        }",
-					"        ",
-					"        if (responseJson.username) {",
-					"            pm.environment.set('username', responseJson.username);",
-					"            console.log('✅ Username automatically saved to environment');",
-					"        }",
-					"        ",
-					"        if (responseJson.email) {",
-					"            pm.environment.set('email', responseJson.email);",
-					"            console.log('✅ Email automatically saved to environment');",
-					"        }",
-					"        ",
-					"        console.log('🎉 Login successful! All tokens and user info saved automatically.');",
-					"        console.log('💡 You can now use protected endpoints without manually setting headers.');",
-					"        ",
-					"    } catch (error) {",
-					"        console.log('❌ Error parsing login response:', error);",
-					"    }",
-					"}",
-					"",
-					"// Auto-save project UUID from create project response",
-					"if (pm.info.requestName === 'Create Project' && pm.response.code === 200) {",
-					"    try {",
-					"        const responseJson = pm.response.json();",
-					"        if (responseJson.projectUuid) {",
-					"            pm.environment.set('projectUuid', responseJson.projectUuid);",
-					"            console.log('✅ Project UUID automatically saved to environment');",
-					"        }",
-					"    } catch (error) {",
-					"        console.log('❌ Error parsing create project response:', error);",
-					"    }",
-					"}",
-					"",
-					"// Check for authentication errors",
+					"// Global test script",
 					"if (pm.response.code === 401) {",
-					"    console.log('🚫 Authentication Error: Please login to get a valid token');",
-					"    console.log('💡 Tip: Run the \"Login\" request first');",
-					"} else if (pm.response.code === 403) {",
-					"    console.log('🚫 Authorization Error: You do not have permission for this action');",
+					"    console.log('Unauthorized. Please check your token.');",
+					"}",
+					"if (pm.response.code === 403) {",
+					"    console.log('Forbidden. You may not have the required permissions.');",
 					"}"
 				]
 			}
@@ -1390,33 +782,48 @@
 			"type": "string"
 		},
 		{
-			"key": "projectUuid",
-			"value": "your-project-uuid",
+			"key": "authToken",
+			"value": "",
 			"type": "string"
 		},
 		{
-			"key": "userUuid",
-			"value": "your-user-uuid",
+			"key": "refreshToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "keycloakUserId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "username",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "email",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "projectUuid",
+			"value": "",
 			"type": "string"
 		},
 		{
 			"key": "schemaName",
-			"value": "your-schema-name",
+			"value": "",
 			"type": "string"
 		},
 		{
 			"key": "recordId",
-			"value": "your-record-id",
+			"value": "",
 			"type": "string"
 		},
 		{
-			"key": "projectId",
-			"value": "your-project-id",
-			"type": "string"
-		},
-		{
-			"key": "authToken",
-			"value": "your-auth-token",
+			"key": "foreignKeyColumn",
+			"value": "",
 			"type": "string"
 		}
 	]

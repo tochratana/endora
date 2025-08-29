@@ -43,7 +43,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final JavaMailSender mailSender;
 
-    @Value("${keycloak.server-url:https://endora-oauth2.istad.co}")
+    @Value("${keycloak.server-url:http://localhost:9090}")
     private String serverUrl;
 
     @Value("${keycloak.realm:endora_api}")
@@ -168,51 +168,38 @@ public class AuthServiceImpl implements AuthService {
         try {
             log.info("Attempting to login user: {}", loginRequest.usernameOrEmail());
 
-            // First approach: Try to create a Keycloak instance directly with user credentials
-            // This will validate the credentials and get tokens if successful
-            try {
-                Keycloak userKeycloak = Keycloak.getInstance(
-                        serverUrl,
-                        realm,
-                        loginRequest.usernameOrEmail(),
-                        loginRequest.password(),
-                        "admin-cli"  // Use admin-cli temporarily for authentication
-                );
+            // First, validate credentials with Keycloak
+            Keycloak userKeycloak = Keycloak.getInstance(
+                    serverUrl,
+                    realm,
+                    loginRequest.usernameOrEmail(),
+                    loginRequest.password(),
+                    clientId,
+                    clientSecret
+            );
 
-                // Try to get an access token to validate credentials
-                AccessTokenResponse tokenResponse = userKeycloak.tokenManager().getAccessToken();
-                log.info("Successfully authenticated user with Keycloak instance");
+            // Get user info and access token from Keycloak
+            AccessTokenResponse tokenResponse = userKeycloak.tokenManager().getAccessToken();
+            UserRepresentation userInfo = getUserInfo(loginRequest.usernameOrEmail());
 
-                // Get user info from Keycloak
-                UserRepresentation userInfo = getUserInfo(loginRequest.usernameOrEmail());
-
-                // Check if email is verified
-                if (!userInfo.isEmailVerified()) {
-                    throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                            "Email not verified. Please verify your email before logging in.");
-                }
-
-                log.info("Login successful for user: {}", userInfo.getUsername());
-
-                // Return Keycloak tokens directly
-                return LoginResponse.builder()
-                        .accessToken(tokenResponse.getToken())
-                        .refreshToken(tokenResponse.getRefreshToken())
-                        .tokenType("Bearer")
-                        .expiresIn(tokenResponse.getExpiresIn())
-                        .userId(userInfo.getId())
-                        .username(userInfo.getUsername())
-                        .email(userInfo.getEmail())
-                        .emailVerified(userInfo.isEmailVerified())
-                        .message("Login successful")
-                        .build();
-
-            } catch (Exception keycloakInstanceException) {
-                log.warn("Keycloak instance approach failed: {}", keycloakInstanceException.getMessage());
-
-                // Fallback: Try REST API approach with different client configurations
-                return attemptRestApiLogin(loginRequest);
+            // Check if email is verified
+            if (!userInfo.isEmailVerified()) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "Email not verified. Please verify your email before logging in.");
             }
+
+            // Return tokens directly - no OTP required for login
+            return LoginResponse.builder()
+                    .accessToken(tokenResponse.getToken())
+                    .refreshToken(tokenResponse.getRefreshToken())
+                    .tokenType("Bearer")
+                    .expiresIn(tokenResponse.getExpiresIn())
+                    .userId(userInfo.getId())
+                    .username(userInfo.getUsername())
+                    .email(userInfo.getEmail())
+                    .emailVerified(userInfo.isEmailVerified())
+                    .message("Login successful")
+                    .build();
 
         } catch (ResponseStatusException e) {
             throw e;
@@ -220,82 +207,6 @@ public class AuthServiceImpl implements AuthService {
             log.error("Login failed for user: {}", loginRequest.usernameOrEmail(), e);
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
         }
-    }
-
-    private LoginResponse attemptRestApiLogin(LoginRequest loginRequest) {
-        String tokenUrl = serverUrl + "/realms/" + realm + "/protocol/openid-connect/token";
-        log.info("Attempting REST API login to: {}", tokenUrl);
-
-        RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-
-        // Try different client configurations
-        String[] clientConfigs = {
-            "account-console",  // Often enabled for direct access
-            "security-admin-console",  // Another common client
-            "broker",  // Identity broker client
-            "admin-cli"  // Last resort with admin-cli
-        };
-
-        for (String testClientId : clientConfigs) {
-            try {
-                log.info("Trying client: {}", testClientId);
-
-                MultiValueMap<String, String> requestBody = new LinkedMultiValueMap<>();
-                requestBody.add("grant_type", "password");
-                requestBody.add("client_id", testClientId);
-
-                // Only add secret for admin-cli
-                if ("admin-cli".equals(testClientId) && clientSecret != null && !clientSecret.trim().isEmpty()) {
-                    requestBody.add("client_secret", clientSecret);
-                }
-
-                requestBody.add("username", loginRequest.usernameOrEmail());
-                requestBody.add("password", loginRequest.password());
-
-                HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(requestBody, headers);
-
-                ResponseEntity<AccessTokenResponse> response = restTemplate.postForEntity(
-                        tokenUrl, request, AccessTokenResponse.class);
-
-                if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                    AccessTokenResponse tokenResponse = response.getBody();
-                    log.info("Successfully authenticated with client: {}", testClientId);
-
-                    // Get user info from Keycloak
-                    UserRepresentation userInfo = getUserInfo(loginRequest.usernameOrEmail());
-
-                    // Check if email is verified
-                    if (!userInfo.isEmailVerified()) {
-                        throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                                "Email not verified. Please verify your email before logging in.");
-                    }
-
-                    // Update the working client in config for future use
-                    this.clientId = testClientId;
-                    log.info("Updated working client to: {}", testClientId);
-
-                    return LoginResponse.builder()
-                            .accessToken(tokenResponse.getToken())
-                            .refreshToken(tokenResponse.getRefreshToken())
-                            .tokenType("Bearer")
-                            .expiresIn(tokenResponse.getExpiresIn())
-                            .userId(userInfo.getId())
-                            .username(userInfo.getUsername())
-                            .email(userInfo.getEmail())
-                            .emailVerified(userInfo.isEmailVerified())
-                            .message("Login successful")
-                            .build();
-                }
-            } catch (Exception clientException) {
-                log.debug("Client {} failed: {}", testClientId, clientException.getMessage());
-                // Continue to next client
-            }
-        }
-
-        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
-            "Authentication failed: No suitable client configuration found for direct access grants");
     }
 
     // Legacy OTP methods (kept for backward compatibility if needed)

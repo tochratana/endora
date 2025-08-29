@@ -3,11 +3,10 @@ package rinsanom.com.springtwodatasoure.service.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-import rinsanom.com.springtwodatasoure.config.KeycloakUtils;
 import rinsanom.com.springtwodatasoure.dto.UserProfileRequest;
 import rinsanom.com.springtwodatasoure.dto.UserProfileResponse;
 import rinsanom.com.springtwodatasoure.entity.User;
@@ -23,19 +22,18 @@ import java.util.Optional;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final KeycloakUtils keycloakUtils;
 
     @Override
-    public UserProfileResponse getCurrentUserProfile(Authentication authentication) {
-        String keycloakUserId = keycloakUtils.getKeycloakUserId(authentication);
-        String username = keycloakUtils.getUsername(authentication);
-        String email = keycloakUtils.getEmail(authentication);
+    public UserProfileResponse getCurrentUserProfile(Jwt jwt) {
+        String keycloakUserId = jwt.getClaimAsString("sub");
+        String username = jwt.getClaimAsString("preferred_username");
+        String email = jwt.getClaimAsString("email");
 
         User user = userRepository.findByKeycloakUserId(keycloakUserId)
                 .orElseGet(() -> {
                     // Create user if doesn't exist (for users created before this system)
                     log.info("Creating missing user record for Keycloak user: {}", keycloakUserId);
-                    return createOrGetUser(keycloakUserId, username);
+                    return createNewUser(keycloakUserId, username);
                 });
 
         return UserProfileResponse.builder()
@@ -51,8 +49,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserProfileResponse updateUserProfile(Authentication authentication, UserProfileRequest request) {
-        String keycloakUserId = keycloakUtils.getKeycloakUserId(authentication);
+    public UserProfileResponse updateUserProfile(Jwt jwt, UserProfileRequest request) {
+        String keycloakUserId = jwt.getClaimAsString("sub");
 
         User user = userRepository.findByKeycloakUserId(keycloakUserId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
@@ -74,8 +72,8 @@ public class UserServiceImpl implements UserService {
         return UserProfileResponse.builder()
                 .id(updatedUser.getId())
                 .keycloakUserId(updatedUser.getKeycloakUserId())
-                .username(keycloakUtils.getUsername(authentication))
-                .email(keycloakUtils.getEmail(authentication))
+                .username(jwt.getClaimAsString("preferred_username"))
+                .email(jwt.getClaimAsString("email"))
                 .displayName(updatedUser.getDisplayName())
                 .profileImage(updatedUser.getProfileImage())
                 .preferences(updatedUser.getPreferences())
@@ -91,13 +89,16 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public User createOrGetUser(String keycloakUserId, String displayName) {
         return userRepository.findByKeycloakUserId(keycloakUserId)
-                .orElseGet(() -> {
-                    User newUser = User.builder()
-                            .keycloakUserId(keycloakUserId)
-                            .displayName(displayName)
-                            .build();
-                    return userRepository.save(newUser);
-                });
+                .orElseGet(() -> createNewUser(keycloakUserId, displayName));
+    }
+
+    @Transactional
+    public User createNewUser(String keycloakUserId, String displayName) {
+        User newUser = User.builder()
+                .keycloakUserId(keycloakUserId)
+                .displayName(displayName)
+                .build();
+        return userRepository.save(newUser);
     }
 
     @Override
@@ -108,10 +109,15 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void deleteUser(String keycloakUserId) {
-        User user = userRepository.findByKeycloakUserId(keycloakUserId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-
-        userRepository.delete(user);
-        log.info("Deleted user with Keycloak ID: {}", keycloakUserId);
+        userRepository.findByKeycloakUserId(keycloakUserId)
+                .ifPresentOrElse(
+                    user -> {
+                        userRepository.delete(user);
+                        log.info("Deleted user with Keycloak ID: {}", keycloakUserId);
+                    },
+                    () -> {
+                        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+                    }
+                );
     }
 }
