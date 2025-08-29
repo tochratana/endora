@@ -5,8 +5,7 @@ import java.util.Map;
 
 @Data
 public class CreateTableRequestDTO {
-    private String userUuid;     // Added userUuid requirement
-    private String projectUuid;  // Changed from projectId to projectUuid
+    private String projectUuid;  // Project UUID is still required
     private String schemaName;
     private Map<String, String> schema;
 }

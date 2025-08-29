@@ -3,8 +3,11 @@ package rinsanom.com.springtwodatasoure.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import rinsanom.com.springtwodatasoure.config.KeycloakUtils;
 import rinsanom.com.springtwodatasoure.dto.ProjectWithUserDTO;
 import rinsanom.com.springtwodatasoure.entity.Projects;
+import rinsanom.com.springtwodatasoure.repository.postgrest.UserRepository;
+import rinsanom.com.springtwodatasoure.security.TokenUserService;
 import rinsanom.com.springtwodatasoure.service.ProjectService;
 
 import java.util.List;
@@ -17,17 +20,18 @@ import java.util.Map;
 public class ProjectController {
 
     private final ProjectService projectService;
+    private final KeycloakUtils keycloakUtils;
+    private final UserRepository userRepository;
+    private final TokenUserService tokenUserService;
 
     @PostMapping
     public ResponseEntity<Map<String, Object>> createProject(@RequestBody Projects project) {
         try {
-            // Validate that userUuid is provided
-            if (project.getUserUuid() == null || project.getUserUuid().trim().isEmpty()) {
-                return ResponseEntity.badRequest().body(Map.of(
-                    "error", "User UUID is required",
-                    "message", "userUuid field must be provided to create a project"
-                ));
-            }
+            // Extract user UUID from JWT token using centralized service
+            String userUuid = tokenUserService.getCurrentUserUuid();
+
+            // Set the userUuid from the token (override any provided userUuid)
+            project.setUserUuid(userUuid);
 
             Projects savedProject = projectService.save(project);
             return ResponseEntity.ok(Map.of(
@@ -49,7 +53,6 @@ public class ProjectController {
         return ResponseEntity.ok(projectService.findAll());
     }
 
-
     @GetMapping("/{id}")
     public ResponseEntity<Projects> getProjectById(@PathVariable String id) {
         Projects project = projectService.findById(id);
@@ -58,7 +61,6 @@ public class ProjectController {
         }
         return ResponseEntity.ok(project);
     }
-
 
     @GetMapping("/uuid/{projectUuid}")
     public ResponseEntity<Object> getProjectByUuid(@PathVariable String projectUuid) {
@@ -79,11 +81,30 @@ public class ProjectController {
     @GetMapping("/user/{userUuid}")
     public ResponseEntity<Object> getProjectsByUserUuid(@PathVariable String userUuid) {
         try {
+            // Validate that the current user can access this user's projects
+            tokenUserService.validateUserAccess(userUuid);
+
             List<Projects> projects = projectService.findByUserUuid(userUuid);
             return ResponseEntity.ok(projects);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
                 "error", "Failed to find projects for user",
+                "message", e.getMessage()
+            ));
+        }
+    }
+
+    @GetMapping("/my-projects")
+    public ResponseEntity<Object> getMyProjects() {
+        try {
+            // Get current user's UUID from token
+            String userUuid = tokenUserService.getCurrentUserUuid();
+
+            List<Projects> projects = projectService.findByUserUuid(userUuid);
+            return ResponseEntity.ok(projects);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Failed to find your projects",
                 "message", e.getMessage()
             ));
         }
@@ -99,5 +120,4 @@ public class ProjectController {
         projectService.deleteById(id);
         return ResponseEntity.noContent().build();
     }
-
 }

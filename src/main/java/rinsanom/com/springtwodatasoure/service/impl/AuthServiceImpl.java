@@ -37,24 +37,23 @@ import java.util.Optional;
 @Slf4j
 public class AuthServiceImpl implements AuthService {
 
-    private final Keycloak keycloak; // This is the admin client
+    private final Keycloak keycloak;
     private final UserRepository userRepository;
     private final OtpRepository otpRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final JavaMailSender mailSender;
 
-    @Value("${keycloak.server-url:https://endora-oauth2.istad.co}")
+    @Value("${keycloak.server-url:http://localhost:9090}")
     private String serverUrl;
 
     @Value("${keycloak.realm:endora_api}")
     private String realm;
 
-    // FIXED: Separate admin and user client configurations
-    @Value("${keycloak.client-id:spring-main}")
-    private String userClientId;
+    @Value("${keycloak.client-id}")
+    private String clientId;
 
     @Value("${keycloak.client-secret}")
-    private String userClientSecret;
+    private String clientSecret;
 
     @Value("${app.otp.expiry-minutes:5}")
     private int otpExpiryMinutes;
@@ -80,7 +79,7 @@ public class AuthServiceImpl implements AuthService {
         String keycloakUserId = null;
 
         try {
-            // Create user in Keycloak using admin client
+            // Create user in Keycloak
             try (Response response = keycloak.realm(realm).users().create(user)) {
                 log.info("Keycloak response status: {}", response.getStatus());
 
@@ -169,13 +168,18 @@ public class AuthServiceImpl implements AuthService {
         try {
             log.info("Attempting to login user: {}", loginRequest.usernameOrEmail());
 
-            // FIXED: Use direct token endpoint call instead of Keycloak.getInstance
-            AccessTokenResponse tokenResponse = authenticateUser(
+            // First, validate credentials with Keycloak
+            Keycloak userKeycloak = Keycloak.getInstance(
+                    serverUrl,
+                    realm,
                     loginRequest.usernameOrEmail(),
-                    loginRequest.password()
+                    loginRequest.password(),
+                    clientId,
+                    clientSecret
             );
 
-            // Get user info using admin client
+            // Get user info and access token from Keycloak
+            AccessTokenResponse tokenResponse = userKeycloak.tokenManager().getAccessToken();
             UserRepresentation userInfo = getUserInfo(loginRequest.usernameOrEmail());
 
             // Check if email is verified
@@ -184,7 +188,7 @@ public class AuthServiceImpl implements AuthService {
                         "Email not verified. Please verify your email before logging in.");
             }
 
-            // Return actual Keycloak tokens
+            // Return tokens directly - no OTP required for login
             return LoginResponse.builder()
                     .accessToken(tokenResponse.getToken())
                     .refreshToken(tokenResponse.getRefreshToken())
@@ -205,38 +209,110 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
-    // NEW: Direct authentication method using token endpoint
-    private AccessTokenResponse authenticateUser(String usernameOrEmail, String password) {
+    // Legacy OTP methods (kept for backward compatibility if needed)
+    @Transactional
+    public OtpResponse sendOtp(OtpRequest otpRequest) {
         try {
-            String tokenUrl = serverUrl + "/realms/" + realm + "/protocol/openid-connect/token";
+            log.info("Sending OTP to email: {}", otpRequest.email());
 
-            RestTemplate restTemplate = new RestTemplate();
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+            // Clean up expired OTPs
+            otpRepository.deleteExpiredOtps(LocalDateTime.now());
 
-            MultiValueMap<String, String> requestBody = new LinkedMultiValueMap<>();
-            requestBody.add("grant_type", "password");
-            requestBody.add("client_id", userClientId);
-            requestBody.add("client_secret", userClientSecret);
-            requestBody.add("username", usernameOrEmail);
-            requestBody.add("password", password);
-            requestBody.add("scope", "openid profile email");
+            // Invalidate any existing unused OTPs for this email and purpose
+            otpRepository.markUsedByEmailAndPurpose(otpRequest.email(), otpRequest.purpose());
 
-            HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(requestBody, headers);
+            // Generate 6-digit OTP
+            String otpCode = String.format("%06d", random.nextInt(999999));
 
-            ResponseEntity<AccessTokenResponse> response = restTemplate.postForEntity(
-                    tokenUrl, request, AccessTokenResponse.class);
+            // Save OTP to database
+            OtpEntity otpEntity = OtpEntity.builder()
+                    .email(otpRequest.email())
+                    .otpCode(otpCode)
+                    .purpose(otpRequest.purpose() != null ? otpRequest.purpose() : "LOGIN")
+                    .createdAt(LocalDateTime.now())
+                    .expiresAt(LocalDateTime.now().plusMinutes(otpExpiryMinutes))
+                    .used(false)
+                    .attempts(0)
+                    .build();
 
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                log.info("User authenticated successfully: {}", usernameOrEmail);
-                return response.getBody();
-            } else {
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication failed");
-            }
+            OtpEntity savedOtp = otpRepository.save(otpEntity);
+
+            // Send OTP email
+            sendOtpEmail(otpRequest.email(), otpCode);
+
+            return OtpResponse.builder()
+                    .message("OTP sent successfully")
+                    .otpId(savedOtp.getId().toString())
+                    .expiresIn(otpExpiryMinutes * 60L) // Convert to seconds
+                    .build();
 
         } catch (Exception e) {
-            log.error("Authentication failed for user: {}", usernameOrEmail, e);
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+            log.error("Failed to send OTP to email: {}", otpRequest.email(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Failed to send OTP: " + e.getMessage());
+        }
+    }
+
+    @Transactional
+    public OtpVerificationResponse verifyOtp(OtpVerificationRequest verificationRequest) {
+        try {
+            log.info("Verifying OTP for email: {}", verificationRequest.email());
+
+            // Find the OTP
+            Optional<OtpEntity> otpOptional = otpRepository.findTopByEmailAndPurposeAndUsedFalseOrderByCreatedAtDesc(
+                    verificationRequest.email(), "LOGIN");
+
+            if (otpOptional.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No valid OTP found");
+            }
+
+            OtpEntity otp = otpOptional.get();
+
+            // Check if OTP is expired
+            if (otp.getExpiresAt().isBefore(LocalDateTime.now())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OTP has expired");
+            }
+
+            // Check attempts
+            if (otp.getAttempts() >= maxOtpAttempts) {
+                otp.setUsed(true);
+                otpRepository.save(otp);
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Maximum OTP attempts exceeded");
+            }
+
+            // Increment attempts
+            otp.setAttempts(otp.getAttempts() + 1);
+            otpRepository.save(otp);
+
+            // Verify OTP
+            if (!otp.getOtpCode().equals(verificationRequest.otp())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid OTP");
+            }
+
+            // Mark OTP as used
+            otp.setUsed(true);
+            otpRepository.save(otp);
+
+            // Generate tokens for the user after successful OTP verification
+            TokenResponse tokens = generateTokensForUser(verificationRequest.email());
+
+            // Get user info for response
+            UserRepresentation userInfo = getUserInfoByEmail(verificationRequest.email());
+
+            return OtpVerificationResponse.builder()
+                    .verified(true)
+                    .message("OTP verified successfully")
+                    .accessToken(tokens.accessToken())
+                    .refreshToken(tokens.refreshToken())
+                    .userId(userInfo.getId())
+                    .build();
+
+        } catch (ResponseStatusException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Failed to verify OTP for email: {}", verificationRequest.email(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Failed to verify OTP: " + e.getMessage());
         }
     }
 
@@ -245,6 +321,7 @@ public class AuthServiceImpl implements AuthService {
         try {
             log.info("Refreshing token");
 
+            // Use RestTemplate to call Keycloak's token endpoint directly
             String tokenUrl = serverUrl + "/realms/" + realm + "/protocol/openid-connect/token";
 
             RestTemplate restTemplate = new RestTemplate();
@@ -253,8 +330,8 @@ public class AuthServiceImpl implements AuthService {
 
             MultiValueMap<String, String> requestBody = new LinkedMultiValueMap<>();
             requestBody.add("grant_type", "refresh_token");
-            requestBody.add("client_id", userClientId); // FIXED: Use user client
-            requestBody.add("client_secret", userClientSecret); // FIXED: Use user client secret
+            requestBody.add("client_id", clientId);
+            requestBody.add("client_secret", clientSecret);
             requestBody.add("refresh_token", refreshRequest.refreshToken());
 
             HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(requestBody, headers);
@@ -295,7 +372,7 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
-    // Rest of your methods remain the same...
+    // Forgot Password functionality
     @Override
     @Transactional
     public OtpResponse forgotPassword(String email) {
@@ -442,7 +519,7 @@ public class AuthServiceImpl implements AuthService {
 
             if (tokenOptional.isEmpty()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "Invalid or expired reset token. Please request a new password reset.");
+                    "Invalid or expired reset token. Please request a new password reset.");
             }
 
             PasswordResetTokenEntity tokenEntity = tokenOptional.get();
@@ -479,7 +556,6 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
-    // Helper methods remain the same...
     private UserRepresentation getUserRepresentation(RegisterRequest registerRequest) {
         UserRepresentation user = new UserRepresentation();
         user.setUsername(registerRequest.username());
@@ -519,6 +595,120 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+    private void sendOtpInternal(OtpRequest otpRequest) {
+        try {
+            log.info("Sending OTP to email: {}", otpRequest.email());
+
+            // Clean up expired OTPs
+            otpRepository.deleteExpiredOtps(LocalDateTime.now());
+
+            // Invalidate any existing unused OTPs for this email and purpose
+            otpRepository.markUsedByEmailAndPurpose(otpRequest.email(), otpRequest.purpose());
+
+            // Generate 6-digit OTP
+            String otpCode = String.format("%06d", random.nextInt(999999));
+
+            // Save OTP to database
+            OtpEntity otpEntity = OtpEntity.builder()
+                    .email(otpRequest.email())
+                    .otpCode(otpCode)
+                    .purpose(otpRequest.purpose() != null ? otpRequest.purpose() : "LOGIN")
+                    .createdAt(LocalDateTime.now())
+                    .expiresAt(LocalDateTime.now().plusMinutes(otpExpiryMinutes))
+                    .used(false)
+                    .attempts(0)
+                    .build();
+
+            OtpEntity savedOtp = otpRepository.save(otpEntity);
+
+            // Send OTP email
+            sendOtpEmail(otpRequest.email(), otpCode);
+
+            log.info("OTP sent successfully with ID: {}", savedOtp.getId());
+
+        } catch (Exception e) {
+            log.error("Failed to send OTP to email: {}", otpRequest.email(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Failed to send OTP: " + e.getMessage());
+        }
+    }
+
+    private TokenResponse generateTokensForUser(String email) {
+        try {
+            // Get user by email to find their username
+            UserRepresentation user = getUserInfoByEmail(email);
+
+            // We need to use a different approach since we don't have the user's password
+            // We'll use the admin client to impersonate the user and generate tokens
+            // This requires proper Keycloak configuration for service account impersonation
+
+            String tokenUrl = serverUrl + "/realms/" + realm + "/protocol/openid-connect/token";
+
+            RestTemplate restTemplate = new RestTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+            // First get service account token
+            MultiValueMap<String, String> serviceAccountBody = new LinkedMultiValueMap<>();
+            serviceAccountBody.add("grant_type", "client_credentials");
+            serviceAccountBody.add("client_id", clientId);
+            serviceAccountBody.add("client_secret", clientSecret);
+
+            HttpEntity<MultiValueMap<String, String>> serviceAccountRequest = new HttpEntity<>(serviceAccountBody, headers);
+
+            ResponseEntity<AccessTokenResponse> serviceAccountResponse = restTemplate.postForEntity(
+                    tokenUrl, serviceAccountRequest, AccessTokenResponse.class);
+
+            if (!serviceAccountResponse.getStatusCode().is2xxSuccessful() || serviceAccountResponse.getBody() == null) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to get service account token");
+            }
+
+            // Now use token exchange to get user token (if supported by your Keycloak configuration)
+            // Alternatively, we can create a session for the user programmatically
+
+            // For now, let's create a simple JWT-like token structure that your application can validate
+            // In a production environment, you should use proper Keycloak token exchange or
+            // implement a custom token provider
+
+            String accessToken = generateJwtToken(user, 3600); // 1 hour
+            String refreshToken = generateJwtToken(user, 86400); // 24 hours (refresh token)
+
+            return TokenResponse.builder()
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
+                    .tokenType("Bearer")
+                    .expiresIn(3600L)
+                    .build();
+
+        } catch (Exception e) {
+            log.error("Failed to generate tokens for user: {}", email, e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Failed to generate tokens: " + e.getMessage());
+        }
+    }
+
+    private String generateJwtToken(UserRepresentation user, long expirationSeconds) {
+        // This is a simplified token generation - in production you should use proper JWT libraries
+        // and sign the tokens with your application's secret key
+
+        long currentTime = System.currentTimeMillis() / 1000;
+        long expirationTime = currentTime + expirationSeconds;
+
+        // Create a simple token structure (you should use a proper JWT library like jjwt)
+        String tokenPayload = String.format(
+            "{\"sub\":\"%s\",\"email\":\"%s\",\"username\":\"%s\",\"iat\":%d,\"exp\":%d,\"iss\":\"endora_api\"}",
+            user.getId(),
+            user.getEmail(),
+            user.getUsername(),
+            currentTime,
+            expirationTime
+        );
+
+        // In production, encode and sign this payload properly
+        // For now, we'll use base64 encoding (NOT SECURE - use proper JWT signing)
+        return java.util.Base64.getEncoder().encodeToString(tokenPayload.getBytes());
+    }
+
     private UserRepresentation getUserInfoByEmail(String email) {
         try {
             List<UserRepresentation> users = keycloak.realm(realm).users().search(null, null, null, email, 0, 1);
@@ -553,8 +743,8 @@ public class AuthServiceImpl implements AuthService {
             message.setTo(email);
             message.setSubject("Password Reset OTP");
             message.setText("Your password reset OTP code is: " + otp +
-                    "\n\nThis code will expire in " + otpExpiryMinutes + " minutes." +
-                    "\n\nIf you did not request a password reset, please ignore this email.");
+                          "\n\nThis code will expire in " + otpExpiryMinutes + " minutes." +
+                          "\n\nIf you did not request a password reset, please ignore this email.");
 
             mailSender.send(message);
             log.info("Password reset OTP email sent successfully to: {}", email);
@@ -571,3 +761,4 @@ public class AuthServiceImpl implements AuthService {
         return java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes);
     }
 }
+

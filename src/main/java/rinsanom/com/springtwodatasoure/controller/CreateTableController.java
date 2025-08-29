@@ -12,6 +12,7 @@ import rinsanom.com.springtwodatasoure.dto.CreateTableRequestDTO;
 import rinsanom.com.springtwodatasoure.dto.CreateTableWithRelationshipsDTO;
 import rinsanom.com.springtwodatasoure.dto.InsertDataRequestDTO;
 import rinsanom.com.springtwodatasoure.entity.TableSchema;
+import rinsanom.com.springtwodatasoure.security.TokenUserService;
 import rinsanom.com.springtwodatasoure.service.DynamicEndpointService;
 import rinsanom.com.springtwodatasoure.service.impl.TableServiceImpl;
 
@@ -25,6 +26,7 @@ import java.util.Map;
 public class CreateTableController {
     private final TableServiceImpl tableService;
     private final DynamicEndpointService dynamicEndpointService;
+    private final TokenUserService tokenUserService;
 
     @Operation(
         summary = "Create a new table",
@@ -38,12 +40,15 @@ public class CreateTableController {
     public ResponseEntity<Map<String, Object>> createTable(
             @Parameter(description = "Table creation request") @RequestBody CreateTableRequestDTO request) {
         try {
-            tableService.createTablesWithUserValidation(request.getUserUuid(), request.getProjectUuid(), request.getSchemaName(), request.getSchema());
+            // Extract user UUID from JWT token using centralized service
+            String userUuid = tokenUserService.getCurrentUserUuid();
+
+            tableService.createTablesWithUserValidation(userUuid, request.getProjectUuid(), request.getSchemaName(), request.getSchema());
             return ResponseEntity.ok(Map.of(
                 "message", "Table created successfully",
                 "schemaName", request.getSchemaName(),
                 "projectUuid", request.getProjectUuid(),
-                "userUuid", request.getUserUuid()
+                "userUuid", userUuid
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
@@ -73,8 +78,11 @@ public class CreateTableController {
     public ResponseEntity<Map<String, Object>> createTableWithRelationships(
             @Parameter(description = "Table creation request with relationships") @RequestBody CreateTableWithRelationshipsDTO request) {
         try {
+            // Extract user UUID from JWT token using centralized service
+            String userUuid = tokenUserService.getCurrentUserUuid();
+
             tableService.createTableWithRelationshipsAndUserValidation(
-                request.getUserUuid(),
+                userUuid,
                 request.getProjectUuid(),
                 request.getSchemaName(),
                 request.getSchema(),
@@ -84,8 +92,7 @@ public class CreateTableController {
                 "message", "Table with relationships created successfully",
                 "schemaName", request.getSchemaName(),
                 "projectUuid", request.getProjectUuid(),
-                "userUuid", request.getUserUuid(),
-                "relationshipsCount", request.getRelationships() != null ? request.getRelationships().size() : 0
+                "userUuid", userUuid
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
@@ -118,6 +125,9 @@ public class CreateTableController {
             @Parameter(description = "User UUID") @PathVariable String userUuid,
             @Parameter(description = "Data to insert") @RequestBody Map<String, Object> data) {
         try {
+            // Validate that the current user can access this user's data
+            tokenUserService.validateUserAccess(userUuid);
+
             tableService.insertDataWithUserValidation(userUuid, schemaName, projectUuid, data);
             return ResponseEntity.ok(Map.of(
                 "message", "Data inserted successfully",
@@ -127,8 +137,39 @@ public class CreateTableController {
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
-                "error", "Failed to insert data",
-                "message", e.getMessage()
+                "error", "Failed to insert data: " + e.getMessage(),
+                "schemaName", schemaName,
+                "projectUuid", projectUuid,
+                "userUuid", userUuid
+            ));
+        }
+    }
+
+    @Operation(
+        summary = "Insert data into current user's table",
+        description = "Inserts data into a table for the current authenticated user"
+    )
+    @PostMapping("/{schemaName}/project/{projectUuid}/data")
+    public ResponseEntity<Map<String, Object>> insertDataForCurrentUser(
+            @Parameter(description = "Schema name") @PathVariable String schemaName,
+            @Parameter(description = "Project UUID") @PathVariable String projectUuid,
+            @Parameter(description = "Data to insert") @RequestBody Map<String, Object> data) {
+        try {
+            // Get current user's UUID from token
+            String userUuid = tokenUserService.getCurrentUserUuid();
+
+            tableService.insertDataWithUserValidation(userUuid, schemaName, projectUuid, data);
+            return ResponseEntity.ok(Map.of(
+                "message", "Data inserted successfully",
+                "schemaName", schemaName,
+                "projectUuid", projectUuid,
+                "userUuid", userUuid
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Failed to insert data: " + e.getMessage(),
+                "schemaName", schemaName,
+                "projectUuid", projectUuid
             ));
         }
     }
@@ -157,12 +198,15 @@ public class CreateTableController {
     public ResponseEntity<Map<String, Object>> insertData(
             @Parameter(description = "Data insertion request") @RequestBody InsertDataRequestDTO request) {
         try {
-            tableService.insertDataWithUserValidation(request.getUserUuid(), request.getSchemaName(), request.getProjectUuid(), request.getData());
+            // Extract user UUID from JWT token using centralized service
+            String userUuid = tokenUserService.getCurrentUserUuid();
+
+            tableService.insertDataWithUserValidation(userUuid, request.getSchemaName(), request.getProjectUuid(), request.getData());
             return ResponseEntity.ok(Map.of(
                 "message", "Data inserted successfully",
                 "schemaName", request.getSchemaName(),
                 "projectUuid", request.getProjectUuid(),
-                "userUuid", request.getUserUuid()
+                "userUuid", userUuid
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
