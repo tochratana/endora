@@ -45,30 +45,44 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/send-otp")
-    public ResponseEntity<OtpResponse> sendOtp(@Valid @RequestBody OtpRequest otpRequest) {
-        try {
-            OtpResponse response = authService.sendOtp(otpRequest);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            throw e; // Let global exception handler deal with it
-        }
-    }
-
-    @PostMapping("/verify-otp")
-    public ResponseEntity<OtpVerificationResponse> verifyOtp(@Valid @RequestBody OtpVerificationRequest verificationRequest) {
-        try {
-            OtpVerificationResponse response = authService.verifyOtp(verificationRequest);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            throw e; // Let global exception handler deal with it
-        }
-    }
-
     @PostMapping("/refresh")
     public ResponseEntity<TokenResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest refreshRequest) {
         try {
             TokenResponse response = authService.refreshToken(refreshRequest);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            throw e; // Let global exception handler deal with it
+        }
+    }
+
+    // Forgot Password endpoints
+    @PostMapping("/forgot-password")
+    public ResponseEntity<OtpResponse> forgotPassword(@Valid @RequestBody ForgotPasswordRequest forgotPasswordRequest) {
+        try {
+            OtpResponse response = authService.forgotPassword(forgotPasswordRequest.email());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            throw e; // Let global exception handler deal with it
+        }
+    }
+
+    @PostMapping("/verify-forgot-password-otp")
+    public ResponseEntity<ForgotPasswordOtpResponse> verifyForgotPasswordOtp(@Valid @RequestBody OtpVerificationRequest verificationRequest) {
+        try {
+            ForgotPasswordOtpResponse response = authService.verifyForgotPasswordOtp(verificationRequest);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            throw e; // Let global exception handler deal with it
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@Valid @RequestBody NewPasswordRequest newPasswordRequest) {
+        try {
+            String response = authService.resetPasswordWithToken(
+                    newPasswordRequest.resetToken(),
+                    newPasswordRequest.newPassword()
+            );
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             throw e; // Let global exception handler deal with it

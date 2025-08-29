@@ -10,17 +10,18 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class KeycloakAdminConfig {
 
-    @Value("${keycloak.server-url:http://localhost:9090}")
+    @Value("${keycloak.server-url:https://endora-oauth2.istad.co}")
     private String serverUrl;
 
     @Value("${keycloak.realm:endora_api}")
     private String realm;
 
+    // This is specifically for admin operations (user management, etc.)
     @Value("${keycloak.admin.client-id:admin-cli}")
-    private String clientId;
+    private String adminClientId;
 
-    @Value("${keycloak.admin.client-secret:eUmu5xJnDDiphTPiy7BAKhC3xNREGZCe}")
-    private String clientSecret;
+    @Value("${keycloak.admin.client-secret}")
+    private String adminClientSecret;
 
     @Bean
     public Keycloak keycloak() {
@@ -28,8 +29,8 @@ public class KeycloakAdminConfig {
                 .serverUrl(serverUrl)
                 .realm(realm)
                 .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
-                .clientId(clientId)
-                .clientSecret(clientSecret)
+                .clientId(adminClientId)
+                .clientSecret(adminClientSecret)
                 .build();
     }
 }

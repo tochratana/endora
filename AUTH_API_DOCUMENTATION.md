@@ -9,11 +9,16 @@ http://localhost:8080/api/auth
 
 ## Authentication Flow Overview
 
+### **New Authentication Flow:**
 1. **Register** → User registration with email verification
 2. **Email Verification** → User verifies email via Keycloak
-3. **Login** → Credentials validation + OTP sent to email
-4. **OTP Verification** → OTP validation + Access/Refresh tokens returned
-5. **Token Refresh** → Refresh access tokens when expired
+3. **Login** → Direct token return (no OTP required)
+4. **Token Refresh** → Refresh access tokens when expired
+
+### **Forgot Password Flow:**
+1. **Forgot Password** → Request password reset OTP
+2. **Verify OTP** → Validate password reset OTP
+3. **Reset Password** → Set new password with validated OTP
 
 ---
 
@@ -49,32 +54,11 @@ http://localhost:8080/api/auth
 }
 ```
 
-**Error Responses:**
-- `400 Bad Request` - Passwords don't match or validation errors
-- `409 Conflict` - User already exists
-- `500 Internal Server Error` - Registration failed
-
-**Example Request:**
-```bash
-curl -X POST http://localhost:8080/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "john_doe",
-    "email": "john@example.com",
-    "password": "SecurePass123!",
-    "confirmedPassword": "SecurePass123!",
-    "firstName": "John",
-    "lastName": "Doe"
-  }'
-```
-
----
-
-### 2. User Login
+### 2. User Login (Direct Token Return)
 
 **Endpoint:** `POST /api/auth/login`
 
-**Description:** Validates credentials and sends OTP to verified email
+**Description:** Validates credentials and returns access/refresh tokens directly
 
 **Request Body:**
 ```json
@@ -87,142 +71,19 @@ curl -X POST http://localhost:8080/api/auth/register \
 **Response:** `200 OK`
 ```json
 {
-  "accessToken": null,
-  "refreshToken": null,
+  "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
+  "refreshToken": "eyJhbGciOiJIUzI1NiJ9...",
   "tokenType": "Bearer",
-  "expiresIn": 0,
+  "expiresIn": 3600,
   "userId": "keycloak-user-id",
   "username": "john_doe",
   "email": "john@example.com",
   "emailVerified": true,
-  "message": "OTP sent to your email. Please verify OTP to complete login."
+  "message": "Login successful"
 }
 ```
 
-**Error Responses:**
-- `401 Unauthorized` - Invalid credentials
-- `403 Forbidden` - Email not verified
-- `500 Internal Server Error` - Login failed
-
-**Example Request:**
-```bash
-curl -X POST http://localhost:8080/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "usernameOrEmail": "john_doe",
-    "password": "SecurePass123!"
-  }'
-```
-
----
-
-### 3. Email Verification (Resend)
-
-**Endpoint:** `POST /api/auth/verify/{userId}`
-
-**Description:** Resends email verification to user
-
-**Path Parameters:**
-- `userId` (string) - Keycloak user ID
-
-**Response:** `200 OK`
-```json
-"Verification email sent successfully"
-```
-
-**Error Responses:**
-- `500 Internal Server Error` - Failed to send verification email
-
-**Example Request:**
-```bash
-curl -X POST http://localhost:8080/api/auth/verify/abc123-def456-ghi789 \
-  -H "Content-Type: application/json"
-```
-
----
-
-### 4. Send OTP
-
-**Endpoint:** `POST /api/auth/send-otp`
-
-**Description:** Sends OTP to specified email for given purpose
-
-**Request Body:**
-```json
-{
-  "email": "string",
-  "purpose": "string"
-}
-```
-
-**Response:** `200 OK`
-```json
-{
-  "message": "OTP sent successfully",
-  "otpId": "123",
-  "expiresIn": 300
-}
-```
-
-**Error Responses:**
-- `400 Bad Request` - Invalid email or purpose
-- `500 Internal Server Error` - Failed to send OTP
-
-**Example Request:**
-```bash
-curl -X POST http://localhost:8080/api/auth/send-otp \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "john@example.com",
-    "purpose": "LOGIN"
-  }'
-```
-
----
-
-### 5. Verify OTP
-
-**Endpoint:** `POST /api/auth/verify-otp`
-
-**Description:** Verifies OTP and returns access/refresh tokens
-
-**Request Body:**
-```json
-{
-  "email": "string",
-  "otp": "string"
-}
-```
-
-**Response:** `200 OK`
-```json
-{
-  "verified": true,
-  "message": "OTP verified successfully",
-  "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
-  "refreshToken": "eyJhbGciOiJIUzI1NiJ9...",
-  "userId": "keycloak-user-id"
-}
-```
-
-**Error Responses:**
-- `400 Bad Request` - Invalid OTP, expired OTP, or max attempts exceeded
-- `404 Not Found` - No valid OTP found
-- `500 Internal Server Error` - Verification failed
-
-**Example Request:**
-```bash
-curl -X POST http://localhost:8080/api/auth/verify-otp \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "john@example.com",
-    "otp": "123456"
-  }'
-```
-
----
-
-### 6. Refresh Token
+### 3. Token Refresh
 
 **Endpoint:** `POST /api/auth/refresh`
 
@@ -245,25 +106,122 @@ curl -X POST http://localhost:8080/api/auth/verify-otp \
 }
 ```
 
-**Error Responses:**
-- `401 Unauthorized` - Invalid or expired refresh token
-- `500 Internal Server Error` - Token refresh failed
+---
 
-**Example Request:**
-```bash
-curl -X POST http://localhost:8080/api/auth/refresh \
-  -H "Content-Type: application/json" \
-  -d '{
-    "refreshToken": "eyJhbGciOiJIUzI1NiJ9..."
-  }'
+## Forgot Password Flow
+
+### 4. Forgot Password
+
+**Endpoint:** `POST /api/auth/forgot-password`
+
+**Description:** Sends password reset OTP to user's email
+
+**Request Body:**
+```json
+{
+  "email": "string"
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "message": "Password reset OTP sent successfully",
+  "otpId": "123",
+  "expiresIn": 300
+}
+```
+
+### 5. Verify Forgot Password OTP
+
+**Endpoint:** `POST /api/auth/verify-forgot-password-otp`
+
+**Description:** Verifies password reset OTP (no tokens returned)
+
+**Request Body:**
+```json
+{
+  "email": "string",
+  "otp": "string"
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "verified": true,
+  "message": "Password reset OTP verified successfully. You can now reset your password.",
+  "accessToken": null,
+  "refreshToken": null,
+  "userId": "keycloak-user-id"
+}
+```
+
+### 6. Reset Password
+
+**Endpoint:** `POST /api/auth/reset-password`
+
+**Description:** Resets user password with validated OTP
+
+**Request Body:**
+```json
+{
+  "email": "string",
+  "otp": "string",
+  "newPassword": "string"
+}
+```
+
+**Response:** `200 OK`
+```json
+"Password reset successfully"
 ```
 
 ---
 
-## Complete Authentication Flow Example
+## Legacy Endpoints (Backward Compatibility)
 
-### Step 1: Register User
+### 7. Send OTP (General Purpose)
+
+**Endpoint:** `POST /api/auth/send-otp`
+
+**Description:** Sends OTP for general purposes
+
+**Request Body:**
+```json
+{
+  "email": "string",
+  "purpose": "string"
+}
+```
+
+### 8. Verify OTP (General Purpose)
+
+**Endpoint:** `POST /api/auth/verify-otp`
+
+**Description:** Verifies general purpose OTP and returns tokens
+
+**Request Body:**
+```json
+{
+  "email": "string",
+  "otp": "string"
+}
+```
+
+### 9. Resend Email Verification
+
+**Endpoint:** `POST /api/auth/verify/{userId}`
+
+**Description:** Resends email verification to user
+
+---
+
+## Complete Flow Examples
+
+### Standard Login Flow
 ```bash
+# 1. Register
 curl -X POST http://localhost:8080/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{
@@ -274,83 +232,79 @@ curl -X POST http://localhost:8080/api/auth/register \
     "firstName": "John",
     "lastName": "Doe"
   }'
-```
 
-### Step 2: User verifies email (via Keycloak email link)
+# 2. User verifies email via Keycloak link
 
-### Step 3: Login (triggers OTP)
-```bash
+# 3. Login and get tokens directly
 curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "usernameOrEmail": "john_doe",
     "password": "SecurePass123!"
   }'
+
+# 4. Use tokens for authenticated requests
+curl -X GET http://localhost:8080/api/protected-endpoint \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9..."
 ```
 
-### Step 4: Verify OTP (get tokens)
+### Forgot Password Flow
 ```bash
-curl -X POST http://localhost:8080/api/auth/verify-otp \
+# 1. Request password reset OTP
+curl -X POST http://localhost:8080/api/auth/forgot-password \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "john@example.com"
+  }'
+
+# 2. Verify password reset OTP
+curl -X POST http://localhost:8080/api/auth/verify-forgot-password-otp \
   -H "Content-Type: application/json" \
   -d '{
     "email": "john@example.com",
     "otp": "123456"
   }'
-```
 
-### Step 5: Use access token for authenticated requests
-```bash
-curl -X GET http://localhost:8080/api/protected-endpoint \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9..."
-```
-
-### Step 6: Refresh token when needed
-```bash
-curl -X POST http://localhost:8080/api/auth/refresh \
+# 3. Reset password
+curl -X POST http://localhost:8080/api/auth/reset-password \
   -H "Content-Type: application/json" \
   -d '{
-    "refreshToken": "eyJhbGciOiJIUzI1NiJ9..."
+    "email": "john@example.com",
+    "otp": "123456",
+    "newPassword": "NewSecurePass123!"
   }'
 ```
 
 ---
 
-## Configuration Requirements
+## Key Changes from Previous Version
 
-### Email Configuration (application.yml)
-```yaml
-spring:
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: your-email@gmail.com
-    password: your-app-password
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-```
+### **Login Flow Changes:**
+- ✅ **Direct Token Return**: Login now returns access/refresh tokens immediately
+- ❌ **No OTP Required**: Removed OTP requirement from login process
+- ✅ **Email Verification Still Required**: Users must verify email before login
 
-### OTP Configuration (application.yml)
-```yaml
-app:
-  otp:
-    expiry-minutes: 5
-    max-attempts: 3
-```
+### **New Forgot Password Features:**
+- ✅ **Dedicated Forgot Password Flow**: Separate OTP process for password reset
+- ✅ **Password Reset OTP**: Uses "FORGOT_PASSWORD" purpose in database
+- ✅ **Secure Password Reset**: OTP verification required before password change
+
+### **Architecture Improvements:**
+- ✅ **Clear Separation**: Login vs Password Reset flows are distinct
+- ✅ **Backward Compatibility**: Legacy OTP endpoints still available
+- ✅ **Enhanced Security**: Different OTP purposes prevent cross-contamination
 
 ---
 
 ## Security Features
 
 - **Email Verification Required**: Users must verify email before login
-- **OTP Verification**: Additional security layer with time-limited OTP
+- **Direct Token Access**: Faster login experience without additional OTP step
+- **Secure Password Reset**: OTP-protected password reset functionality
 - **Token Expiration**: Access tokens expire in 1 hour
 - **Refresh Tokens**: Long-lived tokens for seamless experience
 - **Rate Limiting**: Maximum 3 OTP attempts per request
-- **Automatic Cleanup**: Expired OTPs are automatically removed
+- **Purpose-based OTP**: Different OTP types for different purposes
 
 ---
 
@@ -371,94 +325,7 @@ Common HTTP status codes:
 - `201` - Created
 - `400` - Bad Request
 - `401` - Unauthorized
-- `403` - Forbidden
+- `403` - Forbidden (Email not verified)
 - `404` - Not Found
 - `409` - Conflict
 - `500` - Internal Server Error
-
----
-
-## Postman Collection
-
-You can import this collection into Postman for easy testing:
-
-```json
-{
-  "info": {
-    "name": "Auth Service API",
-    "description": "Authentication service endpoints"
-  },
-  "variable": [
-    {
-      "key": "baseUrl",
-      "value": "http://localhost:8080/api/auth"
-    }
-  ],
-  "item": [
-    {
-      "name": "Register",
-      "request": {
-        "method": "POST",
-        "url": "{{baseUrl}}/register",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "raw": "{\n  \"username\": \"john_doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"SecurePass123!\",\n  \"confirmedPassword\": \"SecurePass123!\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\"\n}"
-        }
-      }
-    },
-    {
-      "name": "Login",
-      "request": {
-        "method": "POST",
-        "url": "{{baseUrl}}/login",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "raw": "{\n  \"usernameOrEmail\": \"john_doe\",\n  \"password\": \"SecurePass123!\"\n}"
-        }
-      }
-    },
-    {
-      "name": "Verify OTP",
-      "request": {
-        "method": "POST",
-        "url": "{{baseUrl}}/verify-otp",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "raw": "{\n  \"email\": \"john@example.com\",\n  \"otp\": \"123456\"\n}"
-        }
-      }
-    },
-    {
-      "name": "Refresh Token",
-      "request": {
-        "method": "POST",
-        "url": "{{baseUrl}}/refresh",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "raw": "{\n  \"refreshToken\": \"your-refresh-token\"\n}"
-        }
-      }
-    }
-  ]
-}
-```
