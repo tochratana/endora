@@ -38,6 +38,7 @@ public class KeycloakSecurityConfig {
         http.authorizeHttpRequests(endpoint -> endpoint
                 // Public endpoints - permit all
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/*/auth/register", "/api/*/auth/login", "/api/*/auth/refresh").permitAll()
                 .requestMatchers("/actuator/**").permitAll() // Health checks, etc.
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll() // API documentation
 

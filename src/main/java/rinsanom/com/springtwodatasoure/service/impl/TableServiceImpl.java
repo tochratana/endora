@@ -12,6 +12,7 @@ import rinsanom.com.springtwodatasoure.repository.mongo.TableDataRepository;
 import rinsanom.com.springtwodatasoure.repository.mongo.ProjectRepository;
 import rinsanom.com.springtwodatasoure.repository.postgrest.UserRepository;
 import rinsanom.com.springtwodatasoure.service.DynamicEndpointService;
+import rinsanom.com.springtwodatasoure.service.AuthScaffoldService;
 import rinsanom.com.springtwodatasoure.service.TableService;
 
 import java.time.LocalDateTime;
@@ -30,6 +31,7 @@ public class TableServiceImpl implements TableService {
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
     private final DynamicEndpointService dynamicEndpointService;
+    private final AuthScaffoldService authScaffoldService;
 
     @Override
     public void createTables(String projectUuid, String schemaName, Map<String, String> schema) {
@@ -64,12 +66,26 @@ public class TableServiceImpl implements TableService {
                 throw new RuntimeException("Table '" + schemaName + "' already exists in project " + projectUuid);
             }
 
+            // For user tables ensure required auth fields exist
+            if (schemaName.equalsIgnoreCase("user") || schemaName.equalsIgnoreCase("users")) {
+                schema.putIfAbsent("id", "UUID");
+                schema.putIfAbsent("email", "VARCHAR(255) UNIQUE");
+                schema.putIfAbsent("password_hash", "VARCHAR(255)");
+                schema.putIfAbsent("created_at", "TIMESTAMP");
+                schema.putIfAbsent("updated_at", "TIMESTAMP");
+            }
+
             // Create table schema
             TableSchema tableSchema = new TableSchema(schemaName, project.getProjectUuid(), schema);
             tableSchemaRepository.save(tableSchema);
 
             // Generate endpoints automatically
             dynamicEndpointService.generateEndpointsForTable(tableSchema);
+
+            // If this is the user table, scaffold auth endpoints
+            if (schemaName.equalsIgnoreCase("user") || schemaName.equalsIgnoreCase("users")) {
+                authScaffoldService.generateDefaultAuthEndpoints(project.getProjectUuid(), schema);
+            }
 
             log.info("Table '{}' created successfully in project '{}' by user '{}'", schemaName, projectUuid, userUuid);
 
