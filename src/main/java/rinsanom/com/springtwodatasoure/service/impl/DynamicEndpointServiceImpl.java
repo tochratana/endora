@@ -2,6 +2,7 @@ package rinsanom.com.springtwodatasoure.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.stereotype.Service;
 import rinsanom.com.springtwodatasoure.entity.EndpointDocumentation;
 import rinsanom.com.springtwodatasoure.entity.TableSchema;
@@ -13,6 +14,7 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@ConditionalOnClass(name = "org.springframework.data.mongodb.core.MongoTemplate")
 public class DynamicEndpointServiceImpl implements DynamicEndpointService {
 
     private final EndpointDocumentationRepository endpointDocumentationRepository;

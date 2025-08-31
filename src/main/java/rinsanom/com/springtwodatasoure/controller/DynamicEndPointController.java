@@ -2,6 +2,7 @@ package rinsanom.com.springtwodatasoure.controller;
 
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import rinsanom.com.springtwodatasoure.entity.EndpointDocumentation;
@@ -18,6 +19,7 @@ import java.util.ArrayList;
 @RestController
 @RequestMapping("/api/endpoints")
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "spring.data.mongodb.uri", matchIfMissing = false)
 public class DynamicEndPointController {
 
     private final DynamicEndpointService dynamicEndpointService;

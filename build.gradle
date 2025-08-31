@@ -29,6 +29,12 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.postgresql:postgresql'
 
+    // Google Cloud SQL dependencies for production deployment
+    implementation 'com.google.cloud.sql:postgres-socket-factory:1.15.0'
+
+    // Spring Boot Actuator for health checks and monitoring
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
     // Lombok - Updated version for better Java 17+ compatibility
     compileOnly 'org.projectlombok:lombok:1.18.30'
     annotationProcessor 'org.projectlombok:lombok:1.18.30'
@@ -38,6 +44,9 @@ dependencies {
 
     // Validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // Email support
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
 
     // Test dependencies
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -49,13 +58,6 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
     // Keycloak
     implementation 'org.keycloak:keycloak-admin-client:26.0.6'
-    // Mail
-    implementation 'org.springframework.boot:spring-boot-starter-mail'
-    // WebClient
-    implementation 'org.springframework.boot:spring-boot-starter-webflux'
-
-
-
 }
 
 tasks.named('test') {

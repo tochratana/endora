@@ -1,0 +1,6 @@
+# Exclude everything by default
+*
+
+# Include only what we need for the Docker build
+!build/libs/*.jar
+!Dockerfile

@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import rinsanom.com.springtwodatasoure.dto.CreateTableRequestDTO;
@@ -23,6 +24,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/table")
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "spring.data.mongodb.uri", matchIfMissing = false)
 public class CreateTableController {
     private final TableServiceImpl tableService;
     private final DynamicEndpointService dynamicEndpointService;

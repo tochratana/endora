@@ -36,7 +36,11 @@ public class KeycloakSecurityConfig {
     @Bean
     public SecurityFilterChain configureApiSecurity(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(endpoint -> endpoint
+                // Allow OPTIONS requests for CORS preflight
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
                 // Public endpoints - permit all
+                .requestMatchers("/", "/actuator/health").permitAll() // Allow public access to root and health endpoints
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll() // Health checks, etc.
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll() // API documentation
@@ -150,6 +154,8 @@ public class KeycloakSecurityConfig {
                 "http://localhost:3001",
                 "http://localhost:4200", // Angular
                 "http://localhost:8080", // Local development
+                "https://*.run.app", // Allow all Cloud Run domains
+                "https://api.api-ngin.oudom.dev", // Custom domain via domain mapping
                 "https://yourdomain.com" // Production domain
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
