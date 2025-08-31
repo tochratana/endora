@@ -52,6 +52,10 @@ spring:
     virtual:
       enabled: true
 
+  # Add filter registration to ensure proper order
+  main:
+    allow-bean-definition-overriding: true
+
 keycloak:
   server-url: https://endora-oauth2.istad.co/
   realm: endora_api
@@ -67,6 +71,10 @@ app:
   otp:
     expiry-minutes: 5
     max-attempts: 3
+  jwt:
+    base-secret: your-super-secret-key-change-this-in-production-make-it-long-and-random
+    expiration: 604800000 # 7 days in milliseconds
+
 
 server:
   port: 8080
@@ -82,3 +90,5 @@ logging:
   level:
     com.tochratana.api: DEBUG
     org.keycloak: DEBUG
+    rinsanom.com.springtwodatasoure.security: DEBUG # Add this for JWT debugging
+    io.jsonwebtoken: DEBUG # Add this for JWT debugging

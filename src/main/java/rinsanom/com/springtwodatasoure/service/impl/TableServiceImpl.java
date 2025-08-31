@@ -12,14 +12,11 @@ import rinsanom.com.springtwodatasoure.repository.mongo.TableDataRepository;
 import rinsanom.com.springtwodatasoure.repository.mongo.ProjectRepository;
 import rinsanom.com.springtwodatasoure.repository.postgrest.UserRepository;
 import rinsanom.com.springtwodatasoure.service.DynamicEndpointService;
+import rinsanom.com.springtwodatasoure.service.AuthScaffoldService;
 import rinsanom.com.springtwodatasoure.service.TableService;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Optional;
-import java.util.ArrayList;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +27,7 @@ public class TableServiceImpl implements TableService {
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
     private final DynamicEndpointService dynamicEndpointService;
+    private final AuthScaffoldService authScaffoldService;
 
     @Override
     public void createTables(String projectUuid, String schemaName, Map<String, String> schema) {
@@ -42,7 +40,7 @@ public class TableServiceImpl implements TableService {
             // Validate user exists (if userUuid provided)
             if (userUuid != null) {
                 userRepository.findByUuid(userUuid)
-                    .orElseThrow(() -> new RuntimeException("User with UUID " + userUuid + " not found"));
+                        .orElseThrow(() -> new RuntimeException("User with UUID " + userUuid + " not found"));
             }
 
             // Validate project exists and belongs to user (if userUuid provided)
@@ -64,12 +62,39 @@ public class TableServiceImpl implements TableService {
                 throw new RuntimeException("Table '" + schemaName + "' already exists in project " + projectUuid);
             }
 
+            // For user tables ensure required auth fields exist
+            if (schemaName.equalsIgnoreCase("user") || schemaName.equalsIgnoreCase("users")) {
+
+                log.info("it's detect as users table and create authentication");
+
+                schema.putIfAbsent("id", UUID.randomUUID().toString());
+                schema.putIfAbsent("email", "VARCHAR(255) UNIQUE");
+                schema.putIfAbsent("password_hash", "VARCHAR(255)");
+                schema.putIfAbsent("created_at", "TIMESTAMP");
+                schema.putIfAbsent("updated_at", "TIMESTAMP");
+
+                // Mark project as having authentication
+                project.setHasUsersTable(true);
+                if (project.getJwtSecret() == null) {
+                    project.setJwtSecret(UUID.randomUUID().toString());
+                }
+                projectRepository.save(project);
+            }
+
             // Create table schema
             TableSchema tableSchema = new TableSchema(schemaName, project.getProjectUuid(), schema);
             tableSchemaRepository.save(tableSchema);
 
             // Generate endpoints automatically
             dynamicEndpointService.generateEndpointsForTable(tableSchema);
+
+            // If this is the user table, scaffold auth endpoints
+            if (schemaName.equalsIgnoreCase("user") || schemaName.equalsIgnoreCase("users")) {
+
+                log.info("Make as authentication in generate endpoint");
+
+                authScaffoldService.generateDefaultAuthEndpoints(project.getProjectUuid(), schema);
+            }
 
             log.info("Table '{}' created successfully in project '{}' by user '{}'", schemaName, projectUuid, userUuid);
 
@@ -127,7 +152,7 @@ public class TableServiceImpl implements TableService {
             // Validate user exists (if userUuid provided)
             if (userUuid != null) {
                 userRepository.findByUuid(userUuid)
-                    .orElseThrow(() -> new RuntimeException("User with UUID " + userUuid + " not found"));
+                        .orElseThrow(() -> new RuntimeException("User with UUID " + userUuid + " not found"));
             }
 
             // Validate project exists and belongs to user (if userUuid provided)
@@ -264,19 +289,19 @@ public class TableServiceImpl implements TableService {
 
     @Override
     public void createTableWithRelationships(String projectUuid, String schemaName, Map<String, String> schema,
-                                           List<CreateTableWithRelationshipsDTO.TableRelationship> relationships) {
+                                             List<CreateTableWithRelationshipsDTO.TableRelationship> relationships) {
         createTableWithRelationshipsAndUserValidation(null, projectUuid, schemaName, schema, relationships);
     }
 
     // New method that includes user validation
     public void createTableWithRelationshipsAndUserValidation(String userUuid, String projectUuid, String schemaName,
-                                                             Map<String, String> schema,
-                                                             List<CreateTableWithRelationshipsDTO.TableRelationship> relationships) {
+                                                              Map<String, String> schema,
+                                                              List<CreateTableWithRelationshipsDTO.TableRelationship> relationships) {
         try {
             // Validate user exists (if userUuid provided)
             if (userUuid != null) {
                 userRepository.findByUuid(userUuid)
-                    .orElseThrow(() -> new RuntimeException("User with UUID " + userUuid + " not found"));
+                        .orElseThrow(() -> new RuntimeException("User with UUID " + userUuid + " not found"));
             }
 
             // Validate project exists and belongs to user (if userUuid provided)
@@ -351,12 +376,12 @@ public class TableServiceImpl implements TableService {
             // Debug: Print all tables and their relationships
             for (TableSchema table : projectTables) {
                 System.out.println("DEBUG: Table '" + table.getSchemaName() + "' has relationships: " +
-                    (table.getRelationships() != null ? table.getRelationships().size() : 0));
+                        (table.getRelationships() != null ? table.getRelationships().size() : 0));
 
                 if (table.getRelationships() != null) {
                     for (TableSchema.TableRelationship rel : table.getRelationships()) {
                         System.out.println("DEBUG: - Relationship: " + rel.getForeignKeyColumn() + " -> " +
-                            rel.getReferencedTable() + "." + rel.getReferencedColumn());
+                                rel.getReferencedTable() + "." + rel.getReferencedColumn());
                     }
                 }
             }
@@ -391,7 +416,7 @@ public class TableServiceImpl implements TableService {
 
             // Get the main record by searching in the specific table and project
             Optional<TableData> tableDataOpt = tableDataRepository.findByIdAndSchemaNameAndProjectId(
-                id, schemaName, projectId
+                    id, schemaName, projectId
             );
             if (tableDataOpt.isEmpty()) {
                 return null;
@@ -415,13 +440,13 @@ public class TableServiceImpl implements TableService {
             for (TableSchema.TableRelationship rel : tableSchema.getRelationships()) {
                 Object foreignKeyValue = record.get(rel.getForeignKeyColumn());
                 System.out.println("DEBUG: Processing relationship - " + rel.getForeignKeyColumn() + " -> " +
-                    rel.getReferencedTable() + "." + rel.getReferencedColumn() + ", value: " + foreignKeyValue);
+                        rel.getReferencedTable() + "." + rel.getReferencedColumn() + ", value: " + foreignKeyValue);
 
                 if (foreignKeyValue != null) {
                     try {
                         // Find related record in the same project
                         List<TableData> relatedRecords = tableDataRepository.findBySchemaNameAndProjectId(
-                            rel.getReferencedTable(), projectId);
+                                rel.getReferencedTable(), projectId);
 
                         System.out.println("DEBUG: Found " + relatedRecords.size() + " records in table '" + rel.getReferencedTable() + "'");
 
@@ -431,33 +456,33 @@ public class TableServiceImpl implements TableService {
                         if ("id".equals(rel.getReferencedColumn())) {
                             // Matching with MongoDB ObjectId
                             relatedRecord = relatedRecords.stream()
-                                .filter(data -> data.getId().equals(foreignKeyValue.toString()))
-                                .findFirst()
-                                .map(data -> {
-                                    Map<String, Object> relData = new HashMap<>(data.getData());
-                                    relData.put("id", data.getId());
-                                    relData.put("createdAt", data.getCreatedAt());
-                                    relData.put("updatedAt", data.getUpdatedAt());
-                                    return relData;
-                                })
-                                .orElse(null);
+                                    .filter(data -> data.getId().equals(foreignKeyValue.toString()))
+                                    .findFirst()
+                                    .map(data -> {
+                                        Map<String, Object> relData = new HashMap<>(data.getData());
+                                        relData.put("id", data.getId());
+                                        relData.put("createdAt", data.getCreatedAt());
+                                        relData.put("updatedAt", data.getUpdatedAt());
+                                        return relData;
+                                    })
+                                    .orElse(null);
                         } else {
                             // Matching with a specific column in the referenced table's data
                             relatedRecord = relatedRecords.stream()
-                                .filter(data -> {
-                                    Object referencedValue = data.getData().get(rel.getReferencedColumn());
-                                    if (referencedValue == null) return false;
-                                    return referencedValue.toString().equals(foreignKeyValue.toString());
-                                })
-                                .findFirst()
-                                .map(data -> {
-                                    Map<String, Object> relData = new HashMap<>(data.getData());
-                                    relData.put("id", data.getId());
-                                    relData.put("createdAt", data.getCreatedAt());
-                                    relData.put("updatedAt", data.getUpdatedAt());
-                                    return relData;
-                                })
-                                .orElse(null);
+                                    .filter(data -> {
+                                        Object referencedValue = data.getData().get(rel.getReferencedColumn());
+                                        if (referencedValue == null) return false;
+                                        return referencedValue.toString().equals(foreignKeyValue.toString());
+                                    })
+                                    .findFirst()
+                                    .map(data -> {
+                                        Map<String, Object> relData = new HashMap<>(data.getData());
+                                        relData.put("id", data.getId());
+                                        relData.put("createdAt", data.getCreatedAt());
+                                        relData.put("updatedAt", data.getUpdatedAt());
+                                        return relData;
+                                    })
+                                    .orElse(null);
                         }
 
                         if (relatedRecord != null) {
@@ -523,7 +548,7 @@ public class TableServiceImpl implements TableService {
 
             // Check if relationship already exists
             boolean relationshipExists = tableSchema.getRelationships().stream()
-                .anyMatch(rel -> rel.getForeignKeyColumn().equals(relationship.getForeignKeyColumn()));
+                    .anyMatch(rel -> rel.getForeignKeyColumn().equals(relationship.getForeignKeyColumn()));
 
             if (relationshipExists) {
                 throw new RuntimeException("Relationship with foreign key '" + relationship.getForeignKeyColumn() + "' already exists");
@@ -562,7 +587,7 @@ public class TableServiceImpl implements TableService {
             }
 
             boolean removed = tableSchema.getRelationships().removeIf(rel ->
-                rel.getForeignKeyColumn().equals(foreignKeyColumn));
+                    rel.getForeignKeyColumn().equals(foreignKeyColumn));
 
             if (!removed) {
                 throw new RuntimeException("Relationship with foreign key '" + foreignKeyColumn + "' not found");
@@ -603,26 +628,26 @@ public class TableServiceImpl implements TableService {
                             Object foreignKeyValue = record.getData().get(rel.getForeignKeyColumn());
                             if (foreignKeyValue != null) {
                                 List<TableData> relatedRecords = tableDataRepository.findBySchemaNameAndProjectId(
-                                    rel.getReferencedTable(), projectId);
+                                        rel.getReferencedTable(), projectId);
 
                                 Map<String, Object> relatedRecord = relatedRecords.stream()
-                                    .filter(data -> {
-                                        if ("id".equals(rel.getReferencedColumn())) {
-                                            return data.getId().equals(foreignKeyValue.toString());
-                                        } else {
-                                            Object referencedValue = data.getData().get(rel.getReferencedColumn());
-                                            return referencedValue != null && referencedValue.toString().equals(foreignKeyValue.toString());
-                                        }
-                                    })
-                                    .findFirst()
-                                    .map(data -> {
-                                        Map<String, Object> relData = new HashMap<>(data.getData());
-                                        relData.put("id", data.getId());
-                                        relData.put("createdAt", data.getCreatedAt());
-                                        relData.put("updatedAt", data.getUpdatedAt());
-                                        return relData;
-                                    })
-                                    .orElse(null);
+                                        .filter(data -> {
+                                            if ("id".equals(rel.getReferencedColumn())) {
+                                                return data.getId().equals(foreignKeyValue.toString());
+                                            } else {
+                                                Object referencedValue = data.getData().get(rel.getReferencedColumn());
+                                                return referencedValue != null && referencedValue.toString().equals(foreignKeyValue.toString());
+                                            }
+                                        })
+                                        .findFirst()
+                                        .map(data -> {
+                                            Map<String, Object> relData = new HashMap<>(data.getData());
+                                            relData.put("id", data.getId());
+                                            relData.put("createdAt", data.getCreatedAt());
+                                            relData.put("updatedAt", data.getUpdatedAt());
+                                            return relData;
+                                        })
+                                        .orElse(null);
 
                                 recordWithJoins.put(rel.getReferencedTable() + "_data", relatedRecord);
                             }
@@ -665,25 +690,25 @@ public class TableServiceImpl implements TableService {
 
                 // Check referential integrity for all records
                 List<TableData> referencedRecords = tableDataRepository.findBySchemaNameAndProjectId(
-                    rel.getReferencedTable(), projectId);
+                        rel.getReferencedTable(), projectId);
 
                 for (TableData record : records) {
                     Object foreignKeyValue = record.getData().get(rel.getForeignKeyColumn());
                     if (foreignKeyValue != null) {
                         boolean referenceExists = referencedRecords.stream()
-                            .anyMatch(refRecord -> {
-                                if ("id".equals(rel.getReferencedColumn())) {
-                                    return refRecord.getId().equals(foreignKeyValue.toString());
-                                } else {
-                                    Object referencedValue = refRecord.getData().get(rel.getReferencedColumn());
-                                    return referencedValue != null && referencedValue.toString().equals(foreignKeyValue.toString());
-                                }
-                            });
+                                .anyMatch(refRecord -> {
+                                    if ("id".equals(rel.getReferencedColumn())) {
+                                        return refRecord.getId().equals(foreignKeyValue.toString());
+                                    } else {
+                                        Object referencedValue = refRecord.getData().get(rel.getReferencedColumn());
+                                        return referencedValue != null && referencedValue.toString().equals(foreignKeyValue.toString());
+                                    }
+                                });
 
                         if (!referenceExists) {
                             System.err.println("Referential integrity violation: Record " + record.getId() +
-                                " references non-existent " + rel.getReferencedTable() + "." + rel.getReferencedColumn() +
-                                " with value " + foreignKeyValue);
+                                    " references non-existent " + rel.getReferencedTable() + "." + rel.getReferencedColumn() +
+                                    " with value " + foreignKeyValue);
                             return false;
                         }
                     }
