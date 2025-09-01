@@ -24,8 +24,8 @@ FROM eclipse-temurin:21-jre-jammy
 # Set the working directory
 WORKDIR /app
 
-# Copy the built JAR file from the build stage
-COPY --from=build /app/build/libs/*.jar app.jar
+# Copy the built JAR file from the build stage (exclude plain JAR)
+COPY --from=build /app/build/libs/*-SNAPSHOT.jar app.jar
 
 # Create a non-root user for security
 RUN groupadd -r spring && useradd -r -g spring spring
