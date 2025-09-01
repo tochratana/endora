@@ -3,6 +3,7 @@ package rinsanom.com.springtwodatasoure.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -34,6 +35,7 @@ public class KeycloakSecurityConfig {
     private final String ROLE_USER = "USER";
 
     @Bean
+    @Order(2) // Lower priority than project config
     public SecurityFilterChain configureApiSecurity(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(endpoint -> endpoint
                 // Allow OPTIONS requests for CORS preflight
