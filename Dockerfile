@@ -1,11 +1,31 @@
-# Optimized Dockerfile using pre-built JAR
+# Multi-stage Dockerfile: Build stage + Runtime stage
+FROM eclipse-temurin:21-jdk-jammy AS build
+
+# Set the working directory
+WORKDIR /app
+
+# Copy Gradle wrapper and build files
+COPY gradlew gradlew.bat ./
+COPY gradle gradle
+COPY build.gradle settings.gradle ./
+
+# Make gradlew executable
+RUN chmod +x gradlew
+
+# Copy source code
+COPY src src
+
+# Build the application
+RUN ./gradlew build -x test --no-daemon
+
+# Runtime stage
 FROM eclipse-temurin:21-jre-jammy
 
 # Set the working directory
 WORKDIR /app
 
-# Copy the pre-built JAR file from local build (using wildcard to match the actual JAR)
-COPY build/libs/*.jar app.jar
+# Copy the built JAR file from the build stage
+COPY --from=build /app/build/libs/*.jar app.jar
 
 # Create a non-root user for security
 RUN groupadd -r spring && useradd -r -g spring spring
