@@ -1,9 +1,9 @@
 spring:
   # PostgreSQL Configuration (for User entity)
   datasource:
-    url: jdbc:postgresql://localhost:5432/endora_db
-    username: tochratana
-    password: 123
+    url: jdbc:postgresql://localhost:5432/pgsql
+    username: postgres
+    password: 1605
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -20,7 +20,7 @@ spring:
     mongodb:
       host: localhost
       port: 27017
-      database: Endora
+      database:  spring-app
       # username: your_mongo_username  # uncomment if auth enabled
       # password: your_mongo_password  # uncomment if auth enabled
 
@@ -40,12 +40,12 @@ spring:
           timeout: 3000
           write timeout: 5000
 
-  # Keycloak Configuration
+  # Keycloak Configuration - FIXED: Match your actual Keycloak server
   security:
     oauth2:
       resource server:
         jwt:
-          issuer-uri: https://0178177f637c.ngrok-free.app/realms/endora_api
+          issuer-uri: https://endora-oauth2.istad.co/realms/endora_api
 
   # Virtual Threads
   threads:
@@ -55,8 +55,9 @@ spring:
 keycloak:
   server-url: https://endora-oauth2.istad.co/
   realm: endora_api
-  client-id: admin-cli  # Add your actual client ID here
-  client-secret: b2L6hrMg76JLk4GSLd8CGMPRJNnAOko2
+  # FIXED: Use the correct client ID for login (not admin-cli)
+  client-id: spring-admin  # This should be your actual client for authentication
+  client-secret: uliUJohOY9OI1jM1SnFrog5iJ23JXWJN  # Get this from Keycloak
   admin:
     client-id: admin-cli
     client-secret: b2L6hrMg76JLk4GSLd8CGMPRJNnAOko2
