@@ -1,55 +1,37 @@
-services:
-  app:
-    build: .
-    container_name: endora-app
-    ports:
-      - "8080:8080"
-    environment:
-      SPRING_PROFILES_ACTIVE: default
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      mongo:
-        condition: service_healthy
-    restart: unless-stopped
+version: '3.8'
 
+services:
+  # PostgreSQL Database
   postgres:
-    image: postgres:15
-    container_name: postgres
-    restart: always
+    image: postgres:15-alpine
+    container_name: endora-postgres
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: endora
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: EndoraSecure2024!
     ports:
       - "5432:5432"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d endora"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s
 
-  mongo:
-    image: mongo:6
-    container_name: mongo
-    restart: always
+  # MongoDB
+  mongodb:
+    image: mongo:7.0
+    container_name: endora-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: EndoraSecure2024!
+      MONGO_INITDB_DATABASE: endora
     ports:
       - "27017:27017"
     volumes:
-      - mongo-data:/data/db
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
+      - mongodb_data:/data/db
 
 volumes:
-  postgres-data:
-  mongo-data:
+  postgres_data:
+  mongodb_data:

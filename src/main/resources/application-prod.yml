@@ -1,0 +1,91 @@
+spring:
+  # PostgreSQL Configuration for Cloud SQL
+  datasource:
+    # Cloud SQL connection format: jdbc:postgresql://google/<database>?cloudSqlInstance=<instance>&socketFactory=com.google.cloud.sql.postgres.SocketFactory
+    url: ${DATABASE_URL:jdbc:postgresql://google/endora?cloudSqlInstance=api-engine-backend-20250829:us-central1:endora-postgres-db&socketFactory=com.google.cloud.sql.postgres.SocketFactory&useSSL=false}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:EndoraSecure2024!}
+    driver-class-name: ${DB_DRIVER:org.postgresql.Driver}
+
+    # Connection pool settings for Cloud deployment
+    hikari:
+      maximum-pool-size: ${DB_MAX_CONNECTIONS:5}
+      minimum-idle: ${DB_MIN_IDLE:1}
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: ${DDL_AUTO:update}  # Use create-drop for H2, validate for production DB
+    database-platform: ${DB_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}
+    show-sql: false  # Disabled in production
+    properties:
+      hibernate:
+        format_sql: false  # Disabled in production
+        jdbc:
+          time_zone: UTC
+
+  # MongoDB Configuration for production
+  data:
+    mongodb:
+      uri: ${SPRING_DATA_MONGODB_URI:mongodb+srv://endora_user:EndoraSecure2024!@endora-cluster.p5pmd6m.mongodb.net/endora?retryWrites=true&w=majority}
+
+  # Email Configuration
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${EMAIL_USERNAME:endora.istad@gmail.com}
+    password: ${EMAIL_PASSWORD:dummy}  # Dummy password for initial deployment
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connection-timeout: 5000
+          timeout: 3000
+          write-timeout: 5000
+
+  # Keycloak Configuration
+  security:
+    oauth2:
+      resource server:
+        jwt:
+          issuer-uri: https://endora-oauth2.istad.co/realms/endora_api
+
+# Keycloak Configuration
+keycloak:
+  server-url: https://endora-oauth2.istad.co/
+  realm: endora_api
+  client-id: spring-admin
+  client-secret: uliUJohOY9OI1jM1SnFrog5iJ23JXWJN
+  admin:
+    client-id: admin-cli
+    client-secret: b2L6hrMg76JLk4GSLd8CGMPRJNnAOko2
+
+# OTP Configuration
+app:
+  otp:
+    expiry-minutes: 5
+    max-attempts: 3
+
+server:
+  port: 8080
+
+# Health check configuration
+management:
+  health:
+    mongo:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+# Logging
+logging:
+  level:
+    com.tochratana.api: INFO
+    org.keycloak: INFO
+    root: INFO
