@@ -1,6 +1,25 @@
-# Exclude everything by default
-*
+# Exclude build artifacts and IDE files
+.git
+.gradle
+build/
+.idea/
+*.iml
+target/
+.vscode/
+.DS_Store
 
-# Include only what we need for the Docker build
-!build/libs/*.jar
+# Exclude documentation and scripts not needed for build
+docs/
+scripts/
+deploy*.sh
+deploy*.yaml
+docker-compose.yml
+
+# Include necessary files for Gradle build
+!gradlew
+!gradlew.bat
+!gradle/
+!build.gradle
+!settings.gradle
+!src/
 !Dockerfile
