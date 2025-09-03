@@ -76,9 +76,15 @@ app:
   otp:
     expiry-minutes: ${OTP_EXPIRY_MINUTES:5}
     max-attempts: ${OTP_MAX_ATTEMPTS:3}
+  # OpenAPI Configuration for Production
+  openapi:
+    server:
+      url: https://api.api-ngin.oudom.dev
+      description: Production Server
 
+# Server Configuration
 server:
-  port: ${SERVER_PORT:8080}
+  port: ${PORT:8080}
   # Add graceful shutdown and startup settings
   shutdown: graceful
   tomcat:
@@ -86,6 +92,9 @@ server:
     threads:
       max: 200
       min-spare: 10
+  error:
+    include-message: never
+    include-binding-errors: never
 
 # Health check configuration - more resilient
 management:
@@ -109,13 +118,14 @@ management:
       probes:
         enabled: true
 
-# Logging configuration for Cloud Run
+# Logging configuration for Production
 logging:
   level:
-    com.tochratana.api: ${LOG_LEVEL:INFO}
+    root: ${ROOT_LOG_LEVEL:WARN}
+    rinsanom.com.springtwodatasoure: ${LOG_LEVEL:INFO}
     org.keycloak: WARN
     org.springframework.data.mongodb: WARN
+    org.springframework.security: WARN
     org.hibernate: WARN
-    root: ${ROOT_LOG_LEVEL:INFO}
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"

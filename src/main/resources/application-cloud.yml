@@ -52,7 +52,14 @@ keycloak:
     client-id: ${KEYCLOAK_ADMIN_CLIENT_ID:admin-cli}
     client-secret: ${KEYCLOAK_ADMIN_CLIENT_SECRET:dummy}
 
-# Server configuration
+# OpenAPI Configuration for Cloud
+app:
+  openapi:
+    server:
+      url: ${OPENAPI_SERVER_URL:https://api.api-ngin.oudom.dev}
+      description: Cloud Server
+
+# Server Configuration for Cloud Run
 server:
   port: ${PORT:8080}
   shutdown: graceful

@@ -1,6 +1,7 @@
 package rinsanom.com.springtwodatasoure.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import rinsanom.com.springtwodatasoure.entity.TableSchema;
 
@@ -11,6 +12,12 @@ import java.util.*;
 public class DynamicOpenApiService {
 
     private final TableService tableService;
+
+    @Value("${app.openapi.server.url:http://localhost:8080}")
+    private String serverUrl;
+
+    @Value("${app.openapi.server.description:Development server}")
+    private String serverDescription;
 
     // Define tables that should have public access (no authentication required)
     private static final Set<String> PUBLIC_TABLES = Set.of("public_info", "announcements");
@@ -34,8 +41,8 @@ public class DynamicOpenApiService {
         // Servers
         List<Map<String, Object>> servers = new ArrayList<>();
         Map<String, Object> server = new HashMap<>();
-        server.put("url", "http://localhost:8080");
-        server.put("description", "Development server");
+        server.put("url", serverUrl);
+        server.put("description", serverDescription);
         servers.add(server);
         openApiSpec.put("servers", servers);
 
@@ -80,12 +87,12 @@ public class DynamicOpenApiService {
         Map<String, Object> paths = new HashMap<>();
 
         // Add authentication endpoints
-        addAuthenticationPaths(paths);
+        addAuthenticationPaths(paths, projectId);
 
         // Generate paths for each table
         for (TableSchema table : tables) {
             String tableName = table.getSchemaName();
-            generateTablePaths(paths, tableName, table);
+            generateTablePaths(paths, tableName, table, projectId);
         }
 
         openApiSpec.put("paths", paths);
@@ -184,7 +191,7 @@ public class DynamicOpenApiService {
         return securitySchemes;
     }
 
-    private void addAuthenticationPaths(Map<String, Object> paths) {
+    private void addAuthenticationPaths(Map<String, Object> paths, String projectId) {
         // Login endpoint
         Map<String, Object> loginPath = new HashMap<>();
         Map<String, Object> loginPost = new HashMap<>();
@@ -224,7 +231,7 @@ public class DynamicOpenApiService {
         loginPost.put("responses", loginResponses);
 
         loginPath.put("post", loginPost);
-        paths.put("/api/auth/login", loginPath);
+        paths.put("/client-api/" + projectId + "/auth/login", loginPath);
 
         // Register endpoint
         Map<String, Object> registerPath = new HashMap<>();
@@ -253,7 +260,7 @@ public class DynamicOpenApiService {
         registerPost.put("responses", registerResponses);
 
         registerPath.put("post", registerPost);
-        paths.put("/api/auth/register", registerPath);
+        paths.put("/client-api/" + projectId + "/auth/register", registerPath);
 
         // Token refresh endpoint
         Map<String, Object> refreshPath = new HashMap<>();
@@ -284,11 +291,11 @@ public class DynamicOpenApiService {
         refreshPost.put("responses", refreshResponses);
 
         refreshPath.put("post", refreshPost);
-        paths.put("/api/auth/refresh", refreshPath);
+        paths.put("/client-api/" + projectId + "/auth/refresh", refreshPath);
     }
 
-    private void generateTablePaths(Map<String, Object> paths, String tableName, TableSchema tableSchema) {
-        String basePath = "/api/tables/" + tableName;
+    private void generateTablePaths(Map<String, Object> paths, String tableName, TableSchema tableSchema, String projectId) {
+        String basePath = "/client-api/" + projectId + "/tables/" + tableName;
         boolean isPublicTable = PUBLIC_TABLES.contains(tableName.toLowerCase());
 
         // Base path operations (GET all, POST)

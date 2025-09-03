@@ -1,7 +1,7 @@
 spring:
   # Default profile configuration
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:prod}
+    active: ${SPRING_PROFILES_ACTIVE:local}
 
   # PostgreSQL Configuration (for User entity)
   datasource:
@@ -40,14 +40,14 @@ spring:
           auth: true
           starttls:
             enable: true
-          connection timeout: 5000
+          connectiontimeout: 5000
           timeout: 3000
-          write timeout: 5000
+          writetimeout: 5000
 
   # Keycloak Configuration - FIXED: Match your actual Keycloak server
   security:
     oauth2:
-      resource server:
+      resourceserver:
         jwt:
           issuer-uri: https://endora-oauth2.istad.co/realms/endora_api
 
