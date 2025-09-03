@@ -101,4 +101,11 @@ jobs:
           --set-env-vars="DB_PLATFORM=org.hibernate.dialect.PostgreSQLDialect" \
           --set-env-vars="DDL_AUTO=validate" \
           --set-env-vars="SPRING_DATA_MONGODB_URI=mongodb+srv://endora_user:EndoraSecure2024!@endora-cluster.p5pmd6m.mongodb.net/endora?retryWrites=true&w=majority" \
+          --set-env-vars="KEYCLOAK_SERVER_URL=https://endora-oauth2.istad.co/" \
+          --set-env-vars="KEYCLOAK_REALM=endora_api" \
+          --set-env-vars="KEYCLOAK_CLIENT_ID=spring-admin" \
+          --set-env-vars="KEYCLOAK_CLIENT_SECRET=uliUJohOY9OI1jM1SnFrog5iJ23JXWJN" \
+          --set-env-vars="KEYCLOAK_ADMIN_CLIENT_ID=admin-cli" \
+          --set-env-vars="KEYCLOAK_ADMIN_CLIENT_SECRET=b2L6hrMg76JLk4GSLd8CGMPRJNnAOko2" \
+          --set-env-vars="KEYCLOAK_ISSUER_URI=https://endora-oauth2.istad.co/realms/endora_api" \
           --add-cloudsql-instances=api-engine-backend-20250829:us-central1:endora-postgres-db
