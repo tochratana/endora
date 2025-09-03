@@ -30,19 +30,6 @@ public class HealthController {
         return ResponseEntity.ok(health);
     }
 
-    @GetMapping("/")
-    public ResponseEntity<Map<String, String>> root() {
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "🚀 API Engine Backend is running successfully");
-        response.put("status", "healthy");
-        response.put("version", "1.0.0");
-        response.put("profile", activeProfile);
-        response.put("deployed", LocalDateTime.now().toString());
-
-        log.info("Root endpoint accessed - service is healthy");
-        return ResponseEntity.ok(response);
-    }
-
     @GetMapping("/readiness")
     public ResponseEntity<Map<String, String>> readiness() {
         Map<String, String> response = new HashMap<>();

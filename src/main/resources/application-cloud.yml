@@ -1,7 +1,5 @@
 spring:
   # Cloud Run configuration that starts without requiring database connections
-  profiles:
-    active: ${SPRING_PROFILES_ACTIVE:cloud}
 
   # Datasource configuration with lazy initialization
   datasource:
