@@ -486,13 +486,6 @@ public class DynamicOpenApiService {
 
         Map<String, Object> properties = new HashMap<>();
 
-        // Add projectId as a required field
-        Map<String, Object> projectIdProperty = new HashMap<>();
-        projectIdProperty.put("type", "string");
-        projectIdProperty.put("description", "Project ID for this record");
-        projectIdProperty.put("example", "proj_12345");
-        properties.put("projectId", projectIdProperty);
-
         if (tableSchema.getSchema() != null) {
             tableSchema.getSchema().forEach((columnName, columnType) -> {
                 Map<String, Object> propertySchema = new HashMap<>();
@@ -507,9 +500,6 @@ public class DynamicOpenApiService {
         }
 
         schema.put("properties", properties);
-
-        // Mark projectId as required
-        schema.put("required", Arrays.asList("projectId"));
 
         return schema;
     }
@@ -728,3 +718,4 @@ public class DynamicOpenApiService {
         return propertySchema;
     }
 }
+
