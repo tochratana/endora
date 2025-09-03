@@ -91,4 +91,10 @@ jobs:
           --allow-unauthenticated \
           --port 8080 \
           --memory 1Gi \
-          --cpu 1
+          --cpu 1 \
+          --timeout 300 \
+          --set-env-vars="SPRING_PROFILES_ACTIVE=prod" \
+          --set-env-vars="SERVER_PORT=8080" \
+          --set-env-vars="SPRING_JPA_HIBERNATE_DDL_AUTO=validate" \
+          --set-env-vars="SPRING_DATASOURCE_HIKARI_INITIALIZATION_FAIL_TIMEOUT=0" \
+          --set-env-vars="SPRING_DATA_MONGODB_AUTO_INDEX_CREATION=false"
