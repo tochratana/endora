@@ -23,15 +23,22 @@ public class DynamicEndpointServiceImpl implements DynamicEndpointService {
     public void generateEndpointsForTable(TableSchema tableSchema) {
         String tableName = tableSchema.getSchemaName();
         String projectId = tableSchema.getProjectId();
-        String basePath = "/api/tables/" + tableName;
 
         try {
-            // Generate documentation
-            String documentation = generateDocumentation(tableName, tableSchema);
+            String documentation;
+
+            // Check if this is a users table - generate auth documentation instead
+            if (tableName.equalsIgnoreCase("user") || tableName.equalsIgnoreCase("users")) {
+                log.info("Generating authentication endpoint documentation for users table: {}", tableName);
+                documentation = generateAuthenticationDocumentation(tableSchema);
+            } else {
+                log.info("Generating standard CRUD endpoint documentation for table: {}", tableName);
+                documentation = generateStandardDocumentation(tableName, tableSchema);
+            }
 
             // Check if documentation already exists
             Optional<EndpointDocumentation> existingDoc = endpointDocumentationRepository
-                .findBySchemaNameAndProjectId(tableName, projectId);
+                    .findBySchemaNameAndProjectId(tableName, projectId);
 
             EndpointDocumentation endpointDoc;
             if (existingDoc.isPresent()) {
@@ -59,6 +66,227 @@ public class DynamicEndpointServiceImpl implements DynamicEndpointService {
             log.error("Failed to generate endpoints for table: {} in project: {}", tableName, projectId, e);
             throw new RuntimeException("Failed to generate endpoints: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Generate authentication-specific documentation for users table
+     */
+    private String generateAuthenticationDocumentation(TableSchema tableSchema) {
+        String tableName = tableSchema.getSchemaName();
+        String projectId = tableSchema.getProjectId();
+        String authBasePath = "/client-api/" + projectId + "/auth";
+        String apiBasePath = "/client-api/" + projectId;
+
+        StringBuilder doc = new StringBuilder();
+
+        doc.append("Table: ").append(tableName).append(" (Authentication Enabled)\n");
+        doc.append("Project ID: ").append(projectId).append("\n");
+        doc.append("Schema: ").append(tableSchema.getSchema()).append("\n\n");
+
+        doc.append("Authentication Endpoints:\n");
+        doc.append("========================\n\n");
+
+        // Register endpoint
+        doc.append("1. POST ").append(authBasePath).append("/register\n");
+        doc.append("   Description: Register a new user account\n");
+        doc.append("   Content-Type: application/json\n");
+        doc.append("   Security: Public (no authentication required)\n");
+        doc.append("   Tags: Authentication\n");
+        doc.append("   Request Body:\n");
+        doc.append("   {\n");
+        doc.append("     \"email\": \"user@example.com\",\n");
+        doc.append("     \"password\": \"securePassword123\",\n");
+        // Add other user fields from schema (excluding auth fields)
+        for (Map.Entry<String, String> entry : tableSchema.getSchema().entrySet()) {
+            String field = entry.getKey();
+            if (!isAuthField(field)) {
+                doc.append("     \"").append(field).append("\": ").append(generateExampleValue(entry.getValue())).append(",\n");
+            }
+        }
+        doc.setLength(doc.length() - 2); // Remove trailing comma
+        doc.append("\n   }\n");
+        doc.append("   Success Response (200):\n");
+        doc.append("   {\n");
+        doc.append("     \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n");
+        doc.append("     \"user\": {\n");
+        doc.append("       \"id\": \"507f1f77bcf86cd799439011\",\n");
+        doc.append("       \"email\": \"user@example.com\",\n");
+        doc.append("       \"createdAt\": \"2023-12-01T10:30:00Z\"\n");
+        doc.append("     }\n");
+        doc.append("   }\n");
+        doc.append("   Example: curl -X POST http://localhost:8080").append(authBasePath).append("/register");
+        doc.append(" -H \"Content-Type: application/json\" -d '{\"email\":\"user@example.com\",\"password\":\"securePassword123\"}'\n\n");
+
+        // Login endpoint
+        doc.append("2. POST ").append(authBasePath).append("/login\n");
+        doc.append("   Description: Login with email and password to receive JWT token\n");
+        doc.append("   Content-Type: application/json\n");
+        doc.append("   Security: Public (no authentication required)\n");
+        doc.append("   Tags: Authentication\n");
+        doc.append("   Request Body:\n");
+        doc.append("   {\n");
+        doc.append("     \"email\": \"user@example.com\",\n");
+        doc.append("     \"password\": \"securePassword123\"\n");
+        doc.append("   }\n");
+        doc.append("   Success Response (200):\n");
+        doc.append("   {\n");
+        doc.append("     \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n");
+        doc.append("     \"user\": {\n");
+        doc.append("       \"id\": \"507f1f77bcf86cd799439011\",\n");
+        doc.append("       \"email\": \"user@example.com\",\n");
+        doc.append("       \"createdAt\": \"2023-12-01T10:30:00Z\"\n");
+        doc.append("     }\n");
+        doc.append("   }\n");
+        doc.append("   Example: curl -X POST http://localhost:8080").append(authBasePath).append("/login");
+        doc.append(" -H \"Content-Type: application/json\" -d '{\"email\":\"user@example.com\",\"password\":\"securePassword123\"}'\n\n");
+
+        // Get current user endpoint
+        doc.append("3. GET ").append(authBasePath).append("/me\n");
+        doc.append("   Description: Get current authenticated user information\n");
+        doc.append("   Security: Bearer Token Required\n");
+        doc.append("   Tags: Authentication\n");
+        doc.append("   Headers:\n");
+        doc.append("     Authorization: Bearer {token}\n");
+        doc.append("   Success Response (200):\n");
+        doc.append("   {\n");
+        doc.append("     \"id\": \"507f1f77bcf86cd799439011\",\n");
+        doc.append("     \"email\": \"user@example.com\",\n");
+        doc.append("     \"createdAt\": \"2023-12-01T10:30:00Z\"\n");
+        doc.append("   }\n");
+        doc.append("   Example: curl -X GET http://localhost:8080").append(authBasePath).append("/me");
+        doc.append(" -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\"\n\n");
+
+        doc.append("Protected API Endpoints (Require Authentication):\n");
+        doc.append("=================================================\n\n");
+
+        // Standard CRUD endpoints but marked as protected
+        doc.append("4. GET ").append(apiBasePath).append("/").append(tableName).append("\n");
+        doc.append("   Description: Get all user records (Admin/Protected access)\n");
+        doc.append("   Security: Bearer Token Required\n");
+        doc.append("   Tags: Users Management\n");
+        doc.append("   Headers:\n");
+        doc.append("     Authorization: Bearer {token}\n");
+        doc.append("   Response: Array of user objects\n\n");
+
+        doc.append("5. GET ").append(apiBasePath).append("/").append(tableName).append("/{id}\n");
+        doc.append("   Description: Get specific user record by ID\n");
+        doc.append("   Security: Bearer Token Required\n");
+        doc.append("   Tags: Users Management\n");
+        doc.append("   Headers:\n");
+        doc.append("     Authorization: Bearer {token}\n");
+        doc.append("   Parameters: id (path parameter - MongoDB ObjectId)\n\n");
+
+        doc.append("6. PUT ").append(apiBasePath).append("/").append(tableName).append("/{id}\n");
+        doc.append("   Description: Update user record by ID\n");
+        doc.append("   Security: Bearer Token Required\n");
+        doc.append("   Tags: Users Management\n");
+        doc.append("   Headers:\n");
+        doc.append("     Authorization: Bearer {token}\n");
+        doc.append("   Content-Type: application/json\n");
+        doc.append("   Parameters: id (path parameter - MongoDB ObjectId)\n\n");
+
+        doc.append("7. DELETE ").append(apiBasePath).append("/").append(tableName).append("/{id}\n");
+        doc.append("   Description: Delete user record by ID\n");
+        doc.append("   Security: Bearer Token Required\n");
+        doc.append("   Tags: Users Management\n");
+        doc.append("   Headers:\n");
+        doc.append("     Authorization: Bearer {token}\n");
+        doc.append("   Parameters: id (path parameter - MongoDB ObjectId)\n\n");
+
+        doc.append("Authentication Flow:\n");
+        doc.append("===================\n");
+        doc.append("1. Register: POST ").append(authBasePath).append("/register\n");
+        doc.append("2. Login: POST ").append(authBasePath).append("/login (returns JWT token)\n");
+        doc.append("3. Use token: Include 'Authorization: Bearer {token}' header in protected API calls\n");
+        doc.append("4. Token expires in 7 days - refresh by logging in again\n\n");
+
+        doc.append("Security Notes:\n");
+        doc.append("==============\n");
+        doc.append("- JWT tokens are project-specific and cannot be used across different projects\n");
+        doc.append("- Passwords are automatically hashed using BCrypt\n");
+        doc.append("- Email addresses must be unique within the project\n");
+        doc.append("- All protected endpoints require valid JWT token in Authorization header\n");
+
+        return doc.toString();
+    }
+
+    /**
+     * Generate standard CRUD documentation for non-users tables
+     */
+    private String generateStandardDocumentation(String tableName, TableSchema tableSchema) {
+        String basePath = "/api/tables/" + tableName;
+        StringBuilder doc = new StringBuilder();
+
+        doc.append("Table: ").append(tableName).append("\n");
+        doc.append("Project ID: ").append(tableSchema.getProjectId()).append("\n");
+        doc.append("Schema: ").append(tableSchema.getSchema()).append("\n\n");
+
+        doc.append("Available Endpoints:\n");
+        doc.append("==================\n\n");
+
+        // Generate detailed request body schema
+        String detailedSchema = generateDetailedRequestBodySchema(tableSchema.getSchema(), tableName);
+        String exampleRequestBody = generateExampleJson(tableSchema.getSchema());
+
+        // GET all records
+        doc.append("1. GET ").append(basePath).append("\n");
+        doc.append("   Description: Get all records from ").append(tableName).append(" table\n");
+        doc.append("   Response: Array of objects matching the table schema\n");
+        doc.append("   Response Schema: ").append(exampleRequestBody).append("\n");
+        doc.append("   Example: curl -X GET http://localhost:8080").append(basePath).append("\n\n");
+
+        // POST create record
+        doc.append("2. POST ").append(basePath).append("\n");
+        doc.append("   Description: Create a new record in ").append(tableName).append(" table\n");
+        doc.append("   Content-Type: application/json\n");
+        doc.append("   Required Fields: ").append(getRequiredFields(tableSchema.getSchema())).append("\n");
+        doc.append("   Request Body Schema:\n").append(detailedSchema).append("\n");
+        doc.append("   Example Request Body: ").append(exampleRequestBody).append("\n");
+        doc.append("   Note: projectId is required in request body\n");
+        doc.append("   Example: curl -X POST http://localhost:8080").append(basePath)
+                .append(" -H \"Content-Type: application/json\" -d '").append(exampleRequestBody).append("'\n\n");
+
+        // GET by ID
+        doc.append("3. GET ").append(basePath).append("/{id}\n");
+        doc.append("   Description: Get a specific record by ID\n");
+        doc.append("   Parameters: id (path parameter - MongoDB ObjectId)\n");
+        doc.append("   Response Schema: ").append(exampleRequestBody).append("\n");
+        doc.append("   Example: curl -X GET http://localhost:8080").append(basePath).append("/507f1f77bcf86cd799439011\n\n");
+
+        // PUT update
+        doc.append("4. PUT ").append(basePath).append("/{id}\n");
+        doc.append("   Description: Update a specific record by ID\n");
+        doc.append("   Parameters: id (path parameter - MongoDB ObjectId)\n");
+        doc.append("   Content-Type: application/json\n");
+        doc.append("   Request Body: JSON object with fields to update (partial update supported)\n");
+        doc.append("   Update Schema:\n").append(detailedSchema).append("\n");
+        doc.append("   Example Update Body: ").append(generatePartialUpdateExample(tableSchema.getSchema())).append("\n");
+        doc.append("   Example: curl -X PUT http://localhost:8080").append(basePath)
+                .append("/507f1f77bcf86cd799439011 -H \"Content-Type: application/json\" -d '").append(generatePartialUpdateExample(tableSchema.getSchema())).append("'\n\n");
+
+        // DELETE
+        doc.append("5. DELETE ").append(basePath).append("/{id}\n");
+        doc.append("   Description: Delete a specific record by ID\n");
+        doc.append("   Parameters: id (path parameter - MongoDB ObjectId)\n");
+        doc.append("   Response: Success/Error message\n");
+        doc.append("   Example: curl -X DELETE http://localhost:8080").append(basePath).append("/507f1f77bcf86cd799439011\n\n");
+
+        // Add validation rules section
+        doc.append("Validation Rules:\n");
+        doc.append("=================\n");
+        doc.append(generateValidationRules(tableSchema.getSchema())).append("\n");
+
+        return doc.toString();
+    }
+
+    /**
+     * Check if a field is an authentication-related field
+     */
+    private boolean isAuthField(String fieldName) {
+        return fieldName.equals("id") ||
+                fieldName.equals("password_hash") ||
+                fieldName.equals("created_at") ||
+                fieldName.equals("updated_at");
     }
 
     @Override
@@ -115,72 +343,6 @@ public class DynamicEndpointServiceImpl implements DynamicEndpointService {
         }
     }
 
-    private String generateDocumentation(String tableName, TableSchema tableSchema) {
-        String basePath = "/api/tables/" + tableName;
-        StringBuilder doc = new StringBuilder();
-
-        doc.append("Table: ").append(tableName).append("\n");
-        doc.append("Project ID: ").append(tableSchema.getProjectId()).append("\n");
-        doc.append("Schema: ").append(tableSchema.getSchema()).append("\n\n");
-
-        doc.append("Available Endpoints:\n");
-        doc.append("==================\n\n");
-
-        // Generate detailed request body schema
-        String detailedSchema = generateDetailedRequestBodySchema(tableSchema.getSchema(), tableName);
-        String exampleRequestBody = generateExampleJson(tableSchema.getSchema());
-
-        // GET all records
-        doc.append("1. GET ").append(basePath).append("\n");
-        doc.append("   Description: Get all records from ").append(tableName).append(" table\n");
-        doc.append("   Response: Array of objects matching the table schema\n");
-        doc.append("   Response Schema: ").append(exampleRequestBody).append("\n");
-        doc.append("   Example: curl -X GET http://localhost:8080").append(basePath).append("\n\n");
-
-        // POST create record
-        doc.append("2. POST ").append(basePath).append("\n");
-        doc.append("   Description: Create a new record in ").append(tableName).append(" table\n");
-        doc.append("   Content-Type: application/json\n");
-        doc.append("   Required Fields: ").append(getRequiredFields(tableSchema.getSchema())).append("\n");
-        doc.append("   Request Body Schema:\n").append(detailedSchema).append("\n");
-        doc.append("   Example Request Body: ").append(exampleRequestBody).append("\n");
-        doc.append("   Note: projectId is required in request body\n");
-        doc.append("   Example: curl -X POST http://localhost:8080").append(basePath)
-           .append(" -H \"Content-Type: application/json\" -d '").append(exampleRequestBody).append("'\n\n");
-
-        // GET by ID
-        doc.append("3. GET ").append(basePath).append("/{id}\n");
-        doc.append("   Description: Get a specific record by ID\n");
-        doc.append("   Parameters: id (path parameter - MongoDB ObjectId)\n");
-        doc.append("   Response Schema: ").append(exampleRequestBody).append("\n");
-        doc.append("   Example: curl -X GET http://localhost:8080").append(basePath).append("/507f1f77bcf86cd799439011\n\n");
-
-        // PUT update
-        doc.append("4. PUT ").append(basePath).append("/{id}\n");
-        doc.append("   Description: Update a specific record by ID\n");
-        doc.append("   Parameters: id (path parameter - MongoDB ObjectId)\n");
-        doc.append("   Content-Type: application/json\n");
-        doc.append("   Request Body: JSON object with fields to update (partial update supported)\n");
-        doc.append("   Update Schema:\n").append(detailedSchema).append("\n");
-        doc.append("   Example Update Body: ").append(generatePartialUpdateExample(tableSchema.getSchema())).append("\n");
-        doc.append("   Example: curl -X PUT http://localhost:8080").append(basePath)
-           .append("/507f1f77bcf86cd799439011 -H \"Content-Type: application/json\" -d '").append(generatePartialUpdateExample(tableSchema.getSchema())).append("'\n\n");
-
-        // DELETE
-        doc.append("5. DELETE ").append(basePath).append("/{id}\n");
-        doc.append("   Description: Delete a specific record by ID\n");
-        doc.append("   Parameters: id (path parameter - MongoDB ObjectId)\n");
-        doc.append("   Response: Success/Error message\n");
-        doc.append("   Example: curl -X DELETE http://localhost:8080").append(basePath).append("/507f1f77bcf86cd799439011\n\n");
-
-        // Add validation rules section
-        doc.append("Validation Rules:\n");
-        doc.append("=================\n");
-        doc.append(generateValidationRules(tableSchema.getSchema())).append("\n");
-
-        return doc.toString();
-    }
-
     private String generateDetailedRequestBodySchema(Map<String, String> schema, String tableName) {
         StringBuilder detailedSchema = new StringBuilder();
         detailedSchema.append("{\n");
@@ -220,7 +382,7 @@ public class DynamicEndpointServiceImpl implements DynamicEndpointService {
     }
 
     private String mapDataTypeToJsonSchema(String dataType) {
-        switch (dataType) {
+        switch (dataType.toUpperCase()) {
             case "VARCHAR":
             case "TEXT":
                 return "string";
@@ -240,7 +402,7 @@ public class DynamicEndpointServiceImpl implements DynamicEndpointService {
     }
 
     private String generateExampleValue(String dataType) {
-        switch (dataType) {
+        switch (dataType.toUpperCase()) {
             case "VARCHAR":
             case "TEXT":
                 return "\"example_value\"";
