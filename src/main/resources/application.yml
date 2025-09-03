@@ -51,6 +51,16 @@ spring:
         jwt:
           issuer-uri: https://endora-oauth2.istad.co/realms/endora_api
 
+# Keycloak Admin Client Configuration
+keycloak:
+  server-url: ${KEYCLOAK_SERVER_URL:https://endora-oauth2.istad.co/}
+  realm: ${KEYCLOAK_REALM:endora_api}
+  client-id: ${KEYCLOAK_CLIENT_ID:spring-admin}
+  client-secret: ${KEYCLOAK_CLIENT_SECRET:uliUJohOY9OI1jM1SnFrog5iJ23JXWJN}
+  admin:
+    client-id: ${KEYCLOAK_ADMIN_CLIENT_ID:admin-cli}
+    client-secret: ${KEYCLOAK_ADMIN_CLIENT_SECRET:b2L6hrMg76JLk4GSLd8CGMPRJNnAOko2}
+
 # Server Configuration
 server:
   port: ${PORT:8080}
