@@ -1,0 +1,105 @@
+spring:
+  # PostgreSQL Configuration for Cloud SQL
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://google/endora?cloudSqlInstance=api-engine-backend-20250829:us-central1:endora-postgres-db&socketFactory=com.google.cloud.sql.postgres.SocketFactory&useSSL=false}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:EndoraSecure2024!}
+    driver-class-name: org.postgresql.Driver
+
+    # Connection pool settings for Cloud deployment
+    hikari:
+      maximum-pool-size: ${DB_MAX_CONNECTIONS:5}
+      minimum-idle: ${DB_MIN_IDLE:1}
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: ${DDL_AUTO:update}
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc:
+          time_zone: UTC
+
+  # MongoDB Configuration for production
+  data:
+    mongodb:
+      uri: ${SPRING_DATA_MONGODB_URI:mongodb+srv://endora_user:EndoraSecure2024!@endora-cluster.p5pmd6m.mongodb.net/endora?retryWrites=true&w=majority}
+
+  # Email Configuration - Make this optional for startup
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${EMAIL_USERNAME:endora.istad@gmail.com}
+    password: ${EMAIL_PASSWORD:dummy}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connection-timeout: 5000
+          timeout: 3000
+          write-timeout: 5000
+    # Make email configuration not fail startup
+    test-connection: false
+
+  # Keycloak Configuration
+  security:
+    oauth2:
+      resource-server:
+        jwt:
+          issuer-uri: https://endora-oauth2.istad.co/realms/endora_api
+
+  # Virtual Threads
+  threads:
+    virtual:
+      enabled: true
+
+  # Main configuration
+  main:
+    allow-bean-definition-overriding: true
+
+# Keycloak Configuration
+keycloak:
+  server-url: https://endora-oauth2.istad.co/
+  realm: endora_api
+  client-id: spring-admin
+  client-secret: uliUJohOY9OI1jM1SnFrog5iJ23JXWJN
+  admin:
+    client-id: admin-cli
+    client-secret: b2L6hrMg76JLk4GSLd8CGMPRJNnAOko2
+
+# OTP Configuration
+app:
+  otp:
+    expiry-minutes: 5
+    max-attempts: 3
+  jwt:
+    base-secret: ${JWT_SECRET:your-super-secret-key-change-this-in-production-make-it-long-and-random}
+    expiration: 604800000
+
+server:
+  port: ${PORT:8080}
+
+# Health check configuration
+management:
+  health:
+    mongo:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+# Logging
+logging:
+  level:
+    com.tochratana.api: INFO
+    org.keycloak: INFO
+    root: INFO
+    org.springframework.boot.autoconfigure.mongo: WARN

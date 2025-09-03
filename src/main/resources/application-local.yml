@@ -1,0 +1,75 @@
+spring:
+  profiles:
+    active: local
+
+  # Database Configuration for Local Development
+  datasource:
+    url: jdbc:postgresql://localhost:5432/endora
+    username: postgres
+    password: EndoraSecure2024!
+    driver-class-name: org.postgresql.Driver
+
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  # MongoDB Configuration for Local Development
+  data:
+    mongodb:
+      uri: mongodb://admin:EndoraSecure2024!@localhost:27017/endora?authSource=admin
+
+  # Email Configuration for Local Development (using MailHog)
+  mail:
+    host: localhost
+    port: 1025
+    username: ""
+    password: ""
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
+# Keycloak Configuration for Local Development
+keycloak:
+  server-url: http://localhost:9090
+  realm: endora_api
+  client-id: endora-backend
+  client-secret: your-client-secret
+
+# Redis Configuration (if you want to add caching)
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+# Logging Configuration for Development
+logging:
+  level:
+    rinsanom.com.springtwodatasoure: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env,beans
+  endpoint:
+    health:
+      show-details: always
+
+# Server Configuration
+server:
+  port: 8080

@@ -40,7 +40,7 @@ spring:
           timeout: 3000
           write timeout: 5000
 
-  # Keycloak Configuration
+  # Keycloak Configuration - FIXED: Match your actual Keycloak server
   security:
     oauth2:
       resource server:
@@ -52,11 +52,16 @@ spring:
     virtual:
       enabled: true
 
+  # Add filter registration to ensure proper order
+  main:
+    allow-bean-definition-overriding: true
+
 keycloak:
   server-url: https://endora-oauth2.istad.co/
   realm: endora_api
-  client-id: admin-cli  # Add your actual client ID here
-  client-secret: b2L6hrMg76JLk4GSLd8CGMPRJNnAOko2
+  # FIXED: Use the correct client ID for login (not admin-cli)
+  client-id: spring-admin  # This should be your actual client for authentication
+  client-secret: uliUJohOY9OI1jM1SnFrog5iJ23JXWJN  # Get this from Keycloak
   admin:
     client-id: admin-cli
     client-secret: b2L6hrMg76JLk4GSLd8CGMPRJNnAOko2
@@ -66,6 +71,10 @@ app:
   otp:
     expiry-minutes: 5
     max-attempts: 3
+  jwt:
+    base-secret: your-super-secret-key-change-this-in-production-make-it-long-and-random
+    expiration: 604800000 # 7 days in milliseconds
+
 
 server:
   port: 8080
@@ -81,3 +90,5 @@ logging:
   level:
     com.tochratana.api: DEBUG
     org.keycloak: DEBUG
+    rinsanom.com.springtwodatasoure.security: DEBUG # Add this for JWT debugging
+    io.jsonwebtoken: DEBUG # Add this for JWT debugging

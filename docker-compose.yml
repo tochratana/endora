@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: endora-postgres
+    environment:
+      POSTGRES_DB: endora
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: EndoraSecure2024!
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d endora"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MongoDB
+  mongodb:
+    image: mongo:7.0
+    container_name: endora-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: EndoraSecure2024!
+      MONGO_INITDB_DATABASE: endora
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+volumes:
+  postgres_data:
+  mongodb_data:
