@@ -92,8 +92,8 @@ jobs:
           --port 8080 \
           --memory 1Gi \
           --cpu 1 \
-          --timeout 300 \
-          --set-env-vars="SPRING_PROFILES_ACTIVE=prod" \
+          --timeout 600 \
+          --set-env-vars="SPRING_PROFILES_ACTIVE=cloud" \
           --set-env-vars="DATABASE_URL=jdbc:postgresql://google/endora?cloudSqlInstance=api-engine-backend-20250829:us-central1:endora-postgres-db&socketFactory=com.google.cloud.sql.postgres.SocketFactory&useSSL=false" \
           --set-env-vars="DB_USERNAME=postgres" \
           --set-env-vars="DB_PASSWORD=EndoraSecure2024!" \

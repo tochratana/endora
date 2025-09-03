@@ -30,7 +30,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'  // Add actuator for health checks
     implementation 'org.postgresql:postgresql'
     implementation 'com.google.cloud.sql:postgres-socket-factory:1.15.0'
-    // Removed H2 from runtime - using your real databases instead
+    implementation 'com.h2database:h2'  // H2 for graceful startup fallback
 
     // Lombok - Updated version for better Java 17+ compatibility
     compileOnly 'org.projectlombok:lombok:1.18.30'

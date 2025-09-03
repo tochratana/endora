@@ -1,0 +1,67 @@
+spring:
+  # Cloud Run configuration that starts without requiring database connections
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:cloud}
+
+  # Datasource configuration with lazy initialization
+  datasource:
+    url: ${DATABASE_URL:jdbc:h2:mem:startup;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:}
+    driver-class-name: ${DB_DRIVER:org.h2.Driver}
+    hikari:
+      initialization-fail-timeout: 0
+      connection-timeout: 2000
+      maximum-pool-size: 2
+      minimum-idle: 0
+
+  jpa:
+    hibernate:
+      ddl-auto: ${DDL_AUTO:create-drop}
+    database-platform: ${DB_PLATFORM:org.hibernate.dialect.H2Dialect}
+    defer-datasource-initialization: true
+    open-in-view: false
+    show-sql: false
+
+  # MongoDB - conditional configuration
+  data:
+    mongodb:
+      uri: ${SPRING_DATA_MONGODB_URI:}
+      auto-index-creation: false
+
+  # Email configuration - non-blocking
+  mail:
+    host: ${EMAIL_HOST:localhost}
+    port: ${EMAIL_PORT:1025}
+    username: ${EMAIL_USERNAME:test}
+    password: ${EMAIL_PASSWORD:test}
+    test-connection: false
+
+  # Security configuration - resilient
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:}
+
+# Server configuration
+server:
+  port: ${PORT:8080}
+  shutdown: graceful
+
+# Management endpoints for health checks
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+  health:
+    defaults:
+      enabled: false
+    db:
+      enabled: false
+    mongo:
+      enabled: false
