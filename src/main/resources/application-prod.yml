@@ -9,11 +9,11 @@ spring:
     # Connection pool settings for Cloud deployment - more resilient
     hikari:
       maximum-pool-size: ${DB_MAX_CONNECTIONS:5}
-      minimum-idle: ${DB_MIN_IDLE:0}
+      minimum-idle: ${DB_MIN_IDLE:1}
       connection-timeout: ${DB_CONNECTION_TIMEOUT:30000}
       idle-timeout: 600000
       max-lifetime: 1800000
-      initialization-fail-timeout: ${SPRING_DATASOURCE_HIKARI_INITIALIZATION_FAIL_TIMEOUT:0}
+      initialization-fail-timeout: ${SPRING_DATASOURCE_HIKARI_INITIALIZATION_FAIL_TIMEOUT:1}
       leak-detection-threshold: 60000
 
   jpa:
@@ -33,7 +33,7 @@ spring:
   # MongoDB Configuration for production - with error handling
   data:
     mongodb:
-      uri: ${SPRING_DATA_MONGODB_URI:mongodb+srv://endora_user:EndoraSecure2024!@endora-cluster.p5pmd6m.mongodb.net/endora?retryWrites=true&w=majority&connectTimeoutMS=5000&serverSelectionTimeoutMS=5000}
+      uri: ${SPRING_DATA_MONGODB_URI:mongodb+srv://endora_user:EndoraSecure2024!@endora-cluster.p5pmd6m.mongodb.net/endora?retryWrites=true&w=majority&connectTimeoutMS=10000&serverSelectionTimeoutMS=10000}
       auto-index-creation: ${SPRING_DATA_MONGODB_AUTO_INDEX_CREATION:false}
 
   # Email Configuration - more resilient
@@ -41,7 +41,7 @@ spring:
     host: ${EMAIL_HOST:smtp.gmail.com}
     port: ${EMAIL_PORT:587}
     username: ${EMAIL_USERNAME:endora.istad@gmail.com}
-    password: ${EMAIL_PASSWORD:dummy}
+    password: ${EMAIL_PASSWORD:utnu dtwk xyre ebkh}
     properties:
       mail:
         smtp:
