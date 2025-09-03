@@ -2,6 +2,7 @@ package rinsanom.com.springtwodatasoure.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public record RegisterRequest(
@@ -20,7 +21,10 @@ public record RegisterRequest(
         String lastName,
 
         @NotBlank(message = "Password is required")
-        @Size(min = 6, message = "Password must be at least 6 characters")
+        @Pattern(
+                regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{8,}$",
+                message = "Password must be at least 8 characters long, contain one uppercase, one lowercase, one number, and one special character"
+        )
         String password,
 
         @NotBlank(message = "Confirmed password is required")
