@@ -6,7 +6,7 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 
 @Configuration
 @EnableMongoRepositories(basePackages = "rinsanom.com.springtwodatasoure.repository.mongo")
-@ConditionalOnProperty(name = "spring.data.mongodb.uri", matchIfMissing = false)
+@ConditionalOnProperty(name = "spring.data.mongodb.uri")
 public class MongoConfig {
     // MongoDB repositories only enabled when MongoDB URI is provided
     // This allows the application to start without MongoDB configuration

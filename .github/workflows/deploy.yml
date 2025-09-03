@@ -93,8 +93,11 @@ jobs:
           --memory 1Gi \
           --cpu 1 \
           --timeout 300 \
-          --set-env-vars="SPRING_PROFILES_ACTIVE=prod" \
           --set-env-vars="SERVER_PORT=8080" \
-          --set-env-vars="SPRING_JPA_HIBERNATE_DDL_AUTO=validate" \
-          --set-env-vars="SPRING_DATASOURCE_HIKARI_INITIALIZATION_FAIL_TIMEOUT=0" \
-          --set-env-vars="SPRING_DATA_MONGODB_AUTO_INDEX_CREATION=false"
+          --set-env-vars="SPRING_PROFILES_ACTIVE=default" \
+          --set-env-vars="DATABASE_URL=jdbc:h2:mem:clouddb;DB_CLOSE_DELAY=-1" \
+          --set-env-vars="DB_USERNAME=sa" \
+          --set-env-vars="DB_PASSWORD=" \
+          --set-env-vars="DB_DRIVER=org.h2.Driver" \
+          --set-env-vars="DDL_AUTO=create-drop" \
+          --set-env-vars="DB_PLATFORM=org.hibernate.dialect.H2Dialect"
