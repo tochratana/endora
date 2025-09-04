@@ -3,10 +3,8 @@ package rinsanom.com.springtwodatasoure.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import rinsanom.com.springtwodatasoure.config.KeycloakUtils;
 import rinsanom.com.springtwodatasoure.dto.ProjectWithUserDTO;
 import rinsanom.com.springtwodatasoure.entity.Projects;
-import rinsanom.com.springtwodatasoure.repository.postgrest.UserRepository;
 import rinsanom.com.springtwodatasoure.security.TokenUserService;
 import rinsanom.com.springtwodatasoure.service.ProjectService;
 
@@ -20,8 +18,6 @@ import java.util.Map;
 public class ProjectController {
 
     private final ProjectService projectService;
-    private final KeycloakUtils keycloakUtils;
-    private final UserRepository userRepository;
     private final TokenUserService tokenUserService;
 
     @PostMapping
