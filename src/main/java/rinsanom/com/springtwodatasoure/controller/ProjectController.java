@@ -3,10 +3,8 @@ package rinsanom.com.springtwodatasoure.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import rinsanom.com.springtwodatasoure.config.KeycloakUtils;
 import rinsanom.com.springtwodatasoure.dto.ProjectWithUserDTO;
 import rinsanom.com.springtwodatasoure.entity.Projects;
-import rinsanom.com.springtwodatasoure.repository.postgrest.UserRepository;
 import rinsanom.com.springtwodatasoure.security.TokenUserService;
 import rinsanom.com.springtwodatasoure.service.ProjectService;
 
@@ -20,8 +18,6 @@ import java.util.Map;
 public class ProjectController {
 
     private final ProjectService projectService;
-    private final KeycloakUtils keycloakUtils;
-    private final UserRepository userRepository;
     private final TokenUserService tokenUserService;
 
     @PostMapping
@@ -29,16 +25,14 @@ public class ProjectController {
         try {
             // Extract user UUID from JWT token using centralized service
             String userUuid = tokenUserService.getCurrentUserUuid();
-
             // Set the userUuid from the token (override any provided userUuid)
             project.setUserUuid(userUuid);
-
             Projects savedProject = projectService.save(project);
             return ResponseEntity.ok(Map.of(
                 "message", "Project created successfully",
                 "project", savedProject,
-                "projectUuid", savedProject.getProjectUuid(),
-                "userUuid", savedProject.getUserUuid()
+                "projectUuid", savedProject.getProjectUuid()
+//                "userUuid", savedProject.getUserUuid()
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
