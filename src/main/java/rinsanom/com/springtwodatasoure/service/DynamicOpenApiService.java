@@ -1,7 +1,6 @@
 package rinsanom.com.springtwodatasoure.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import rinsanom.com.springtwodatasoure.entity.TableSchema;
 
@@ -12,12 +11,6 @@ import java.util.*;
 public class DynamicOpenApiService {
 
     private final TableService tableService;
-
-    @Value("${app.openapi.server.url:http://localhost:8080}")
-    private String serverUrl;
-
-    @Value("${app.openapi.server.description:Development server}")
-    private String serverDescription;
 
     // Define tables that should have public access (no authentication required)
     private static final Set<String> PUBLIC_TABLES = Set.of("public_info", "announcements");
@@ -41,8 +34,8 @@ public class DynamicOpenApiService {
         // Servers
         List<Map<String, Object>> servers = new ArrayList<>();
         Map<String, Object> server = new HashMap<>();
-        server.put("url", serverUrl);
-        server.put("description", serverDescription);
+        server.put("url", "http://localhost:8080");
+        server.put("description", "Development server");
         servers.add(server);
         openApiSpec.put("servers", servers);
 
@@ -87,12 +80,12 @@ public class DynamicOpenApiService {
         Map<String, Object> paths = new HashMap<>();
 
         // Add authentication endpoints
-        addAuthenticationPaths(paths, projectId);
+        addAuthenticationPaths(paths);
 
         // Generate paths for each table
         for (TableSchema table : tables) {
             String tableName = table.getSchemaName();
-            generateTablePaths(paths, tableName, table, projectId);
+            generateTablePaths(paths, tableName, table);
         }
 
         openApiSpec.put("paths", paths);
@@ -191,7 +184,7 @@ public class DynamicOpenApiService {
         return securitySchemes;
     }
 
-    private void addAuthenticationPaths(Map<String, Object> paths, String projectId) {
+    private void addAuthenticationPaths(Map<String, Object> paths) {
         // Login endpoint
         Map<String, Object> loginPath = new HashMap<>();
         Map<String, Object> loginPost = new HashMap<>();
@@ -231,7 +224,7 @@ public class DynamicOpenApiService {
         loginPost.put("responses", loginResponses);
 
         loginPath.put("post", loginPost);
-        paths.put("/client-api/" + projectId + "/auth/login", loginPath);
+        paths.put("/api/auth/login", loginPath);
 
         // Register endpoint
         Map<String, Object> registerPath = new HashMap<>();
@@ -260,7 +253,7 @@ public class DynamicOpenApiService {
         registerPost.put("responses", registerResponses);
 
         registerPath.put("post", registerPost);
-        paths.put("/client-api/" + projectId + "/auth/register", registerPath);
+        paths.put("/api/auth/register", registerPath);
 
         // Token refresh endpoint
         Map<String, Object> refreshPath = new HashMap<>();
@@ -291,11 +284,11 @@ public class DynamicOpenApiService {
         refreshPost.put("responses", refreshResponses);
 
         refreshPath.put("post", refreshPost);
-        paths.put("/client-api/" + projectId + "/auth/refresh", refreshPath);
+        paths.put("/api/auth/refresh", refreshPath);
     }
 
-    private void generateTablePaths(Map<String, Object> paths, String tableName, TableSchema tableSchema, String projectId) {
-        String basePath = "/client-api/" + projectId + "/tables/" + tableName;
+    private void generateTablePaths(Map<String, Object> paths, String tableName, TableSchema tableSchema) {
+        String basePath = "/api/tables/" + tableName;
         boolean isPublicTable = PUBLIC_TABLES.contains(tableName.toLowerCase());
 
         // Base path operations (GET all, POST)
@@ -493,13 +486,6 @@ public class DynamicOpenApiService {
 
         Map<String, Object> properties = new HashMap<>();
 
-        // Add projectId as a required field
-        Map<String, Object> projectIdProperty = new HashMap<>();
-        projectIdProperty.put("type", "string");
-        projectIdProperty.put("description", "Project ID for this record");
-        projectIdProperty.put("example", "proj_12345");
-        properties.put("projectId", projectIdProperty);
-
         if (tableSchema.getSchema() != null) {
             tableSchema.getSchema().forEach((columnName, columnType) -> {
                 Map<String, Object> propertySchema = new HashMap<>();
@@ -514,9 +500,6 @@ public class DynamicOpenApiService {
         }
 
         schema.put("properties", properties);
-
-        // Mark projectId as required
-        schema.put("required", Arrays.asList("projectId"));
 
         return schema;
     }
@@ -735,3 +718,4 @@ public class DynamicOpenApiService {
         return propertySchema;
     }
 }
+
