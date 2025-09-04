@@ -42,13 +42,8 @@ public class OpenApiConfig {
 
         // Add production server URL for Cloud Run
         openAPI.addServersItem(new Server()
-                .url("https://api-engine-backend-xtugah3chq-uc.a.run.app" + contextPath)
+                .url("https://api-engine-backend-308354822720.asia-southeast1.run.app" + contextPath)
                 .description("Production server (Google Cloud Run)"));
-
-        // Add alternative production URL
-        openAPI.addServersItem(new Server()
-                .url("https://api-engine-backend-308354822720.us-central1.run.app" + contextPath)
-                .description("Production server (Alternative URL)"));
 
         // Add localhost for development
         openAPI.addServersItem(new Server()
