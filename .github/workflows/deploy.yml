@@ -96,10 +96,10 @@ jobs:
           --set-env-vars="SPRING_PROFILES_ACTIVE=cloud" \
           --set-env-vars="DATABASE_URL=jdbc:postgresql://google/endora?cloudSqlInstance=api-engine-backend-20250829:asia-southeast1:api-ngin-postgres-db-asia&socketFactory=com.google.cloud.sql.postgres.SocketFactory&useSSL=false" \
           --set-env-vars="DB_USERNAME=postgres" \
-          --set-env-vars="DB_PASSWORD=EndoraSecure2024!" \
+          --set-env-vars="DB_PASSWORD=£0t[=4WhF6h6" \
           --set-env-vars="DB_DRIVER=org.postgresql.Driver" \
           --set-env-vars="DB_PLATFORM=org.hibernate.dialect.PostgreSQLDialect" \
-          --set-env-vars="DDL_AUTO=validate" \
+          --set-env-vars="DDL_AUTO=update" \
           --set-env-vars="SPRING_DATA_MONGODB_URI=mongodb+srv://endora_user:EndoraSecure2024!@endora-cluster.p5pmd6m.mongodb.net/endora?retryWrites=true&w=majority" \
           --set-env-vars="KEYCLOAK_SERVER_URL=https://endora-oauth2.istad.co/" \
           --set-env-vars="KEYCLOAK_REALM=endora_api" \
