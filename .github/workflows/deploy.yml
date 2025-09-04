@@ -94,7 +94,7 @@ jobs:
           --cpu 1 \
           --timeout 600 \
           --set-env-vars="SPRING_PROFILES_ACTIVE=cloud" \
-          --set-env-vars="DATABASE_URL=jdbc:postgresql://google/endora?cloudSqlInstance=api-engine-backend-20250829:us-central1:endora-postgres-db&socketFactory=com.google.cloud.sql.postgres.SocketFactory&useSSL=false" \
+          --set-env-vars="DATABASE_URL=jdbc:postgresql://google/endora?cloudSqlInstance=api-engine-backend-20250829:asia-southeast1:api-ngin-postgres-db-asia&socketFactory=com.google.cloud.sql.postgres.SocketFactory&useSSL=false" \
           --set-env-vars="DB_USERNAME=postgres" \
           --set-env-vars="DB_PASSWORD=EndoraSecure2024!" \
           --set-env-vars="DB_DRIVER=org.postgresql.Driver" \
@@ -108,4 +108,4 @@ jobs:
           --set-env-vars="KEYCLOAK_ADMIN_CLIENT_ID=admin-cli" \
           --set-env-vars="KEYCLOAK_ADMIN_CLIENT_SECRET=b2L6hrMg76JLk4GSLd8CGMPRJNnAOko2" \
           --set-env-vars="KEYCLOAK_ISSUER_URI=https://endora-oauth2.istad.co/realms/endora_api" \
-          --add-cloudsql-instances=api-engine-backend-20250829:us-central1:endora-postgres-db
+          --add-cloudsql-instances=api-engine-backend-20250829:asia-southeast1:api-ngin-postgres-db-asia
