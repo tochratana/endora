@@ -18,6 +18,7 @@ spring:
   # MongoDB Configuration (for dynamic tables)
   data:
     mongodb:
+      uri: mongodb://localhost:27017/endora
       host: localhost
       port: 27017
       database: endora

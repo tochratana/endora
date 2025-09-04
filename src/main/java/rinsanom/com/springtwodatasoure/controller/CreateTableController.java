@@ -40,23 +40,24 @@ public class CreateTableController {
     })
     @PostMapping
     public ResponseEntity<Map<String, Object>> createTable(
+            @Parameter(description = "Project UUID") @RequestParam String projectUuid,
             @Parameter(description = "Table creation request") @RequestBody CreateTableRequestDTO request) {
         try {
             // Extract user UUID from JWT token using centralized service
             String userUuid = tokenUserService.getCurrentUserUuid();
 
-            tableService.createTablesWithUserValidation(userUuid, request.getProjectUuid(), request.getSchemaName(), request.getSchema());
+            tableService.createTablesWithUserValidation(userUuid, projectUuid, request.getSchemaName(), request.getSchema());
             return ResponseEntity.ok(Map.of(
                 "message", "Table created successfully",
                 "schemaName", request.getSchemaName(),
-                "projectUuid", request.getProjectUuid(),
+                "projectUuid", projectUuid,
                 "userUuid", userUuid
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
                 "error", "Failed to create table: " + e.getMessage(),
                 "schemaName", request.getSchemaName(),
-                "projectUuid", request.getProjectUuid()
+                "projectUuid", projectUuid
             ));
         }
     }
@@ -78,6 +79,7 @@ public class CreateTableController {
     })
     @PostMapping("/with-relationships")
     public ResponseEntity<Map<String, Object>> createTableWithRelationships(
+            @Parameter(description = "Project UUID") @RequestParam String projectUuid,
             @Parameter(description = "Table creation request with relationships") @RequestBody CreateTableWithRelationshipsDTO request) {
         try {
             // Extract user UUID from JWT token using centralized service
@@ -85,7 +87,7 @@ public class CreateTableController {
 
             tableService.createTableWithRelationshipsAndUserValidation(
                 userUuid,
-                request.getProjectUuid(),
+                projectUuid,
                 request.getSchemaName(),
                 request.getSchema(),
                 request.getRelationships()
@@ -93,14 +95,14 @@ public class CreateTableController {
             return ResponseEntity.ok(Map.of(
                 "message", "Table with relationships created successfully",
                 "schemaName", request.getSchemaName(),
-                "projectUuid", request.getProjectUuid(),
+                "projectUuid", projectUuid,
                 "userUuid", userUuid
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
                 "error", "Failed to create table with relationships: " + e.getMessage(),
                 "schemaName", request.getSchemaName(),
-                "projectUuid", request.getProjectUuid()
+                "projectUuid", projectUuid
             ));
         }
     }

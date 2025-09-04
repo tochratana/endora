@@ -222,6 +222,40 @@ public class TableServiceImpl implements TableService {
         }
     }
 
+    // Enhanced methods that include relationships as arrays of objects
+    public List<Map<String, Object>> getAllDataFromTableWithRelations(String schemaName, String projectUuid) {
+        try {
+            List<TableData> tableDataList = tableDataRepository.findBySchemaNameAndProjectId(schemaName, projectUuid);
+            return tableDataList.stream()
+                    .map(tableData -> {
+                        // Get basic record with relationships
+                        Map<String, Object> recordWithRelations = getRecordWithRelations(schemaName, tableData.getId(), projectUuid);
+                        return recordWithRelations != null ? recordWithRelations : createBasicRecord(tableData);
+                    })
+                    .toList();
+        } catch (Exception e) {
+            System.err.println("Error retrieving data with relations: " + e.getMessage());
+            throw new RuntimeException("Failed to retrieve data with relations from table: " + e.getMessage(), e);
+        }
+    }
+
+    public Map<String, Object> getRecordByIdWithRelations(String schemaName, String id, String projectUuid) {
+        try {
+            return getRecordWithRelations(schemaName, id, projectUuid);
+        } catch (Exception e) {
+            System.err.println("Error retrieving record with relations: " + e.getMessage());
+            throw new RuntimeException("Failed to retrieve record with relations: " + e.getMessage(), e);
+        }
+    }
+
+    private Map<String, Object> createBasicRecord(TableData tableData) {
+        Map<String, Object> dataWithId = new HashMap<>(tableData.getData());
+        dataWithId.put("id", tableData.getId());
+        dataWithId.put("createdAt", tableData.getCreatedAt());
+        dataWithId.put("updatedAt", tableData.getUpdatedAt());
+        return dataWithId;
+    }
+
     @Override
     public Map<String, Object> getRecordById(String schemaName, String id) {
         try {

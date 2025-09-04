@@ -1,0 +1,1412 @@
+{
+	"info": {
+		"_postman_id": "93ef89d4-e4ee-4c50-be32-eab54c282c50",
+		"name": "Endorav2",
+		"description": "Complete collection of all endpoints for the Spring Two DataSource application",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "35058659",
+		"_collection_link": "https://dev-smos.postman.co/workspace/NestJs~60d57991-6416-45fe-85e1-5888dd088eb0/collection/35058659-93ef89d4-e4ee-4c50-be32-eab54c282c50?action=share&source=collection_link&creator=35058659"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"testuser@example.com\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"User\",\n  \"password\": \"password123\",\n  \"confirmedPassword\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"accessToken\", jsonData.accessToken);",
+									"    pm.environment.set(\"refreshToken\", jsonData.refreshToken);",
+									"    pm.environment.set(\"userUuid\", jsonData.userId);",
+									"    pm.environment.set(\"username\", jsonData.username);",
+									"    pm.environment.set(\"email\", jsonData.email);",
+									"    console.log(\"Tokens saved to environment variables\");",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"usernameOrEmail\": \"rinsanom3@gmail.com\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify Email",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/verify/{{userUuid}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"verify",
+								"{{userUuid}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Sent OTP",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"string\",\n  \"otp\": \"string\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/verify-otp",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"verify-otp"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Forgot Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"rinsanom3@gmail.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/forgot-password",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"forgot-password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "verify-otp-forgot-password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"rinsanom3@gmail.com\",\n  \"otp\": \"280875\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/verify-forgot-password-otp",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"verify-forgot-password-otp"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "reset-password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"rinsanom3@gmail.com\",\n  \"newPassword\": \"newPassword123\",\n  \"confirmPassword\": \"newPassword123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/reset-password",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"reset-password"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "User Management",
+			"item": [
+				{
+					"name": "Get Current User Profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/users/profile",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update User Profile",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"displayName\": \"Updated Display Name\",\n  \"profileImage\": \"https://example.com/image.jpg\",\n  \"preferences\": \"dark-theme\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/users/profile",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/users/{{userUuid}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"{{userUuid}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Project Management",
+			"item": [
+				{
+					"name": "Create Project",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICI5SGJROV9WSnVOZW9pWnF3WnU0d1NKZjI2b1V4YzZNeTB4SkxKcnlrV0VrIn0.eyJleHAiOjE3NTY5MTkwMzQsImlhdCI6MTc1Njg4MzAzNCwianRpIjoib25ydHJvOjBjMjc0NWNhLTBjNTMtOGZkMS01MzBiLTgxZGU5NTRmMzNjMiIsImlzcyI6Imh0dHBzOi8vZW5kb3JhLW9hdXRoMi5pc3RhZC5jby9yZWFsbXMvZW5kb3JhX2FwaSIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiJhM2RjNzc3Yy1lYWFlLTQ3MDQtOWIyNS0yNWM3ODlmMTJkMDUiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzcHJpbmctYWRtaW4iLCJzaWQiOiJjYmYxNDc4OS0xMjc0LTRhNWEtYWVjOC05NDQ1YmQ3YjRmM2IiLCJhY3IiOiIxIiwiYWxsb3dlZC1vcmlnaW5zIjpbIi8qIl0sInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJkZWZhdWx0LXJvbGVzLWVuZG9yYV9hcGkiLCJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJwcm9maWxlIGVtYWlsIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm5hbWUiOiJSaW4gU2Fub20iLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJyaW5zYW5vbSIsImdpdmVuX25hbWUiOiJSaW4iLCJmYW1pbHlfbmFtZSI6IlNhbm9tIiwiZW1haWwiOiJyaW5zYW5vbTNAZ21haWwuY29tIn0.b6BKxDvQgG9qlvKxqwvZ_mLuP7HP6m-DG3QYEP0hiGy68--1hoPGSXLbXzaHDsU81-QtRbapjdpc8O0dkq73Qpl9-vI4nvF5Me7VI2C5EXfpkYO4fjiHlxnXt2hr8vWMYeYbRLg6jCNUE_JROuJoCnsVwvnF2QDecaXJpizxvmJMSeXhAqdWmoARKAJHmsTlAdJrEtPNoHiJLUlCd6G-c0Xq0bt9MTfPL3qxyBhU2zeR9yQ6uzbfDVoVPSty2h1x6giMWYw2uEngp0wdjt29H0ON9wlh3PuOfr2Fvgd6NBL-P84evs7RqPuHO0eNgilmjuUfsHMuZAVq_7erEn8RPw",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"projectName\": \"E-Commerce System\",\n  \"description\": \"E-commerce, short for electronic commerce, refers to the buying and selling of goods and services over the internet, involving the digital transfer of money and data to complete transactions\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/projects",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"projects"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Projects",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/projects",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"projects"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Project by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/projects/{{projectId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"projects",
+								"{{projectId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Project by UUID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/projects/uuid/{{projectUuid}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"projects",
+								"uuid",
+								"{{projectUuid}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Projects by User UUID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/projects/user/{{userUuid}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"projects",
+								"user",
+								"{{userUuid}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Project with User",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/projects/{{projectId}}/with-user",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"projects",
+								"{{projectId}}",
+								"with-user"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Project",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/projects/{{projectId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"projects",
+								"{{projectId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Table Management",
+			"item": [
+				{
+					"name": "Table With Relation",
+					"item": [
+						{
+							"name": "Create Table with Relationships",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICI5SGJROV9WSnVOZW9pWnF3WnU0d1NKZjI2b1V4YzZNeTB4SkxKcnlrV0VrIn0.eyJleHAiOjE3NTY0NDE1NjcsImlhdCI6MTc1NjQ0MTI2NywianRpIjoib25ydHJvOjhjOTViNzVmLThiN2YtYzAzNi03YjE0LTg1NWYyOWRmMGRiOCIsImlzcyI6Imh0dHBzOi8vZW5kb3JhLW9hdXRoMi5pc3RhZC5jby9yZWFsbXMvZW5kb3JhX2FwaSIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiJhM2RjNzc3Yy1lYWFlLTQ3MDQtOWIyNS0yNWM3ODlmMTJkMDUiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzcHJpbmctYWRtaW4iLCJzaWQiOiIwNmNiNzJlYi0wMmFkLTQyMjAtYTkzZi05OGIzMjgxNjJmYjMiLCJhY3IiOiIxIiwiYWxsb3dlZC1vcmlnaW5zIjpbIi8qIl0sInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJkZWZhdWx0LXJvbGVzLWVuZG9yYV9hcGkiLCJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJwcm9maWxlIGVtYWlsIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm5hbWUiOiJSaW4gU2Fub20iLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJyaW5zYW5vbSIsImdpdmVuX25hbWUiOiJSaW4iLCJmYW1pbHlfbmFtZSI6IlNhbm9tIiwiZW1haWwiOiJyaW5zYW5vbTNAZ21haWwuY29tIn0.EOSG7c29jayTDUHTi_l_jl3oyH8gPPLBpFAgHHTefblLQ79dAW-pgSz1N_rWRNyl2pdptBlcj_VGu_4ze_CiUkc0Dk7WGV5yByB7RzRJ4WsLWpL9xk7QVOxKLwjJ__Th0Gg7EOl_0g5ZGNOi9Z2WqmNmi0cebVjKwuUEAL4litDtZjc2p7ChD2zXwNv_VAkqGPJgkCC19VtbLBjCcO8x6DV489_zaChOIxI_ZlKmIeCZu-RpHW5KCGR61t201Q9XdkmiW-q6NQnkPHIY5xubOZoffdAieZ0fVTwOsy0f7R4aYiTsudz79q3BUnoL4xuObOa4NM-M72SvI40ZpKswow",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{authToken}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"projectUuid\": \"{{projectUuid}}\",\n  \"schemaName\": \"orders\",\n \"schema\": {\n    \"id\": \"VARCHAR(36) PRIMARY KEY\",\n    \"user_id\": \"VARCHAR(36) NOT NULL\",\n    \"product_name\": \"VARCHAR(255) NOT NULL\",\n    \"total_amount\": \"DECIMAL(10,2)\",\n    \"created_at\": \"TIMESTAMP DEFAULT CURRENT_TIMESTAMP\"\n  },\n  \"relationships\": [\n    {\n      \"foreignKeyColumn\": \"customers_id\",\n      \"referencedTable\": \"customers\",\n      \"referencedColumn\": \"id\",\n      \"onDelete\": \"CASCADE\",\n      \"onUpdate\": \"CASCADE\"\n    }\n  ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/table/with-relationships",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"table",
+										"with-relationships"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Table Relationships",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICI5SGJROV9WSnVOZW9pWnF3WnU0d1NKZjI2b1V4YzZNeTB4SkxKcnlrV0VrIn0.eyJleHAiOjE3NTY5MjgzMDMsImlhdCI6MTc1Njg5MjMwMywianRpIjoib25ydHJvOmRiYmM5YWJkLTk2ZjQtOWQwMy1hMmUyLTMxNjVhNGVjMGE4NSIsImlzcyI6Imh0dHBzOi8vZW5kb3JhLW9hdXRoMi5pc3RhZC5jby9yZWFsbXMvZW5kb3JhX2FwaSIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiJhM2RjNzc3Yy1lYWFlLTQ3MDQtOWIyNS0yNWM3ODlmMTJkMDUiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzcHJpbmctYWRtaW4iLCJzaWQiOiI2ZDMwNmI5Yy01ODAxLTRjMmMtODU4OC1lNzEzMjA4NDdiN2QiLCJhY3IiOiIxIiwiYWxsb3dlZC1vcmlnaW5zIjpbIi8qIl0sInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJkZWZhdWx0LXJvbGVzLWVuZG9yYV9hcGkiLCJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJwcm9maWxlIGVtYWlsIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm5hbWUiOiJSaW4gU2Fub20iLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJyaW5zYW5vbSIsImdpdmVuX25hbWUiOiJSaW4iLCJmYW1pbHlfbmFtZSI6IlNhbm9tIiwiZW1haWwiOiJyaW5zYW5vbTNAZ21haWwuY29tIn0.ZKk3HCVpHqr5_iWSURL19x9HItgqC2vkg-UZkl2WQ3u942w1vxNatRCmILgiu2Fx6dpHfDXi5tU9vLfDhOC6CMdATfC8OTIxWBDMNYHm-Ke_lKqce3Ld6aYlnBlPloPONLZ9-AQ08R0rU5EDrN1XhFd-OsCE7IH5tOm7EjerGRHdF9ib2QDijZiJ5lLtHW99QhL2O8DbOIl0XyXFS2JrOGRgsb0Jf5WxffZJw4CmQu9nu-i5_xKh7j8RUOml7RdAbdUcUE9tk3YTVmxe3dHmQuO_rg3JXerahBDWY54-CoOGCH-3ihXVY7vgTguvgQhXd2cejLf-Bwwp4f5-TMY4UQ",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/table/{{schemaName}}/project/{{projectUuid}}/relationships",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"table",
+										"{{schemaName}}",
+										"project",
+										"{{projectUuid}}",
+										"relationships"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Add Relationship to Existing Table",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICI5SGJROV9WSnVOZW9pWnF3WnU0d1NKZjI2b1V4YzZNeTB4SkxKcnlrV0VrIn0.eyJleHAiOjE3NTY0NDE1NjcsImlhdCI6MTc1NjQ0MTI2NywianRpIjoib25ydHJvOjhjOTViNzVmLThiN2YtYzAzNi03YjE0LTg1NWYyOWRmMGRiOCIsImlzcyI6Imh0dHBzOi8vZW5kb3JhLW9hdXRoMi5pc3RhZC5jby9yZWFsbXMvZW5kb3JhX2FwaSIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiJhM2RjNzc3Yy1lYWFlLTQ3MDQtOWIyNS0yNWM3ODlmMTJkMDUiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzcHJpbmctYWRtaW4iLCJzaWQiOiIwNmNiNzJlYi0wMmFkLTQyMjAtYTkzZi05OGIzMjgxNjJmYjMiLCJhY3IiOiIxIiwiYWxsb3dlZC1vcmlnaW5zIjpbIi8qIl0sInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJkZWZhdWx0LXJvbGVzLWVuZG9yYV9hcGkiLCJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJwcm9maWxlIGVtYWlsIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm5hbWUiOiJSaW4gU2Fub20iLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJyaW5zYW5vbSIsImdpdmVuX25hbWUiOiJSaW4iLCJmYW1pbHlfbmFtZSI6IlNhbm9tIiwiZW1haWwiOiJyaW5zYW5vbTNAZ21haWwuY29tIn0.EOSG7c29jayTDUHTi_l_jl3oyH8gPPLBpFAgHHTefblLQ79dAW-pgSz1N_rWRNyl2pdptBlcj_VGu_4ze_CiUkc0Dk7WGV5yByB7RzRJ4WsLWpL9xk7QVOxKLwjJ__Th0Gg7EOl_0g5ZGNOi9Z2WqmNmi0cebVjKwuUEAL4litDtZjc2p7ChD2zXwNv_VAkqGPJgkCC19VtbLBjCcO8x6DV489_zaChOIxI_ZlKmIeCZu-RpHW5KCGR61t201Q9XdkmiW-q6NQnkPHIY5xubOZoffdAieZ0fVTwOsy0f7R4aYiTsudz79q3BUnoL4xuObOa4NM-M72SvI40ZpKswow",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"foreignKeyColumn\": \"customer_id\",\n  \"referencedTable\": \"customers\", \n  \"referencedColumn\": \"id\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/table/{{schemaName}}/project/{{projectUuid}}/relationships",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"table",
+										"{{schemaName}}",
+										"project",
+										"{{projectUuid}}",
+										"relationships"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Remove Relationship from Table",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/table/{{schemaName}}/project/{{projectUuid}}/relationships/{{foreignKeyColumn}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"table",
+										"{{schemaName}}",
+										"project",
+										"{{projectUuid}}",
+										"relationships",
+										"{{foreignKeyColumn}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Validate Relationship Integrity",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICI5SGJROV9WSnVOZW9pWnF3WnU0d1NKZjI2b1V4YzZNeTB4SkxKcnlrV0VrIn0.eyJleHAiOjE3NTY0NDE1NjcsImlhdCI6MTc1NjQ0MTI2NywianRpIjoib25ydHJvOjhjOTViNzVmLThiN2YtYzAzNi03YjE0LTg1NWYyOWRmMGRiOCIsImlzcyI6Imh0dHBzOi8vZW5kb3JhLW9hdXRoMi5pc3RhZC5jby9yZWFsbXMvZW5kb3JhX2FwaSIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiJhM2RjNzc3Yy1lYWFlLTQ3MDQtOWIyNS0yNWM3ODlmMTJkMDUiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzcHJpbmctYWRtaW4iLCJzaWQiOiIwNmNiNzJlYi0wMmFkLTQyMjAtYTkzZi05OGIzMjgxNjJmYjMiLCJhY3IiOiIxIiwiYWxsb3dlZC1vcmlnaW5zIjpbIi8qIl0sInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJkZWZhdWx0LXJvbGVzLWVuZG9yYV9hcGkiLCJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJwcm9maWxlIGVtYWlsIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm5hbWUiOiJSaW4gU2Fub20iLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJyaW5zYW5vbSIsImdpdmVuX25hbWUiOiJSaW4iLCJmYW1pbHlfbmFtZSI6IlNhbm9tIiwiZW1haWwiOiJyaW5zYW5vbTNAZ21haWwuY29tIn0.EOSG7c29jayTDUHTi_l_jl3oyH8gPPLBpFAgHHTefblLQ79dAW-pgSz1N_rWRNyl2pdptBlcj_VGu_4ze_CiUkc0Dk7WGV5yByB7RzRJ4WsLWpL9xk7QVOxKLwjJ__Th0Gg7EOl_0g5ZGNOi9Z2WqmNmi0cebVjKwuUEAL4litDtZjc2p7ChD2zXwNv_VAkqGPJgkCC19VtbLBjCcO8x6DV489_zaChOIxI_ZlKmIeCZu-RpHW5KCGR61t201Q9XdkmiW-q6NQnkPHIY5xubOZoffdAieZ0fVTwOsy0f7R4aYiTsudz79q3BUnoL4xuObOa4NM-M72SvI40ZpKswow",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/table/{{schemaName}}/project/{{projectUuid}}/validate-integrity",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"table",
+										"{{schemaName}}",
+										"project",
+										"{{projectUuid}}",
+										"validate-integrity"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Table No Relation",
+					"item": [
+						{
+							"name": "Create Table",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICI5SGJROV9WSnVOZW9pWnF3WnU0d1NKZjI2b1V4YzZNeTB4SkxKcnlrV0VrIn0.eyJleHAiOjE3NTY5MTgxNDQsImlhdCI6MTc1Njg4MjE0NCwianRpIjoib25ydHJvOjQyNWVmZjlkLTA3ZDctZmJlNS0wNGI1LWQwNTA2NzdjYWJjNCIsImlzcyI6Imh0dHBzOi8vZW5kb3JhLW9hdXRoMi5pc3RhZC5jby9yZWFsbXMvZW5kb3JhX2FwaSIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiJhM2RjNzc3Yy1lYWFlLTQ3MDQtOWIyNS0yNWM3ODlmMTJkMDUiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzcHJpbmctYWRtaW4iLCJzaWQiOiI4MGM3NDAyMC00Mzk4LTQxOTgtYjFjNS1mYzhkY2NiYmViZDAiLCJhY3IiOiIxIiwiYWxsb3dlZC1vcmlnaW5zIjpbIi8qIl0sInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJkZWZhdWx0LXJvbGVzLWVuZG9yYV9hcGkiLCJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJwcm9maWxlIGVtYWlsIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm5hbWUiOiJSaW4gU2Fub20iLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJyaW5zYW5vbSIsImdpdmVuX25hbWUiOiJSaW4iLCJmYW1pbHlfbmFtZSI6IlNhbm9tIiwiZW1haWwiOiJyaW5zYW5vbTNAZ21haWwuY29tIn0.Bw1nLPvX0S14PLSlaFoT1DhgxZRaHyg1JOCOX4D2RoLqk-m6HQlIpEhqgJZqH0_RDU8e6c90mjWHGjL2bJrCL1BBqAMbiEtHs0O0an7d7eb7NAHvEDWcsPEyZYkxyS26Mhm3zVOFLkSnXLiXHlxpxxHKXNo7fZhGhuZkOdXHddZoSHRJlc5U7Ea1d2sXlyiORJq-mo-USxChfx5sRKzc7M2QyrsnJv3Wo2xFj4WJ5evDJ4ysdwqXYkBtd9LpKwbzLpryFvVRDh_b0MkwTPXFVDoT_e6pvLQSxO064C0BE7YYDhnUT9JHGplXRQTiWBM3qb6gMZAAUAhMwSZUsYaV8w",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{authToken}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"projectUuid\": \"{{projectUuid}}\",\n  \"schemaName\": \"users\",\n  \"schema\": {\n    \"name\": \"VARCHAR(255)\",\n    \"email\": \"VARCHAR(255)\",\n    \"age\": \"INT\"\n  }\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/table",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"table"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get All Tables",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICI5SGJROV9WSnVOZW9pWnF3WnU0d1NKZjI2b1V4YzZNeTB4SkxKcnlrV0VrIn0.eyJleHAiOjE3NTY5MjgzMDMsImlhdCI6MTc1Njg5MjMwMywianRpIjoib25ydHJvOmRiYmM5YWJkLTk2ZjQtOWQwMy1hMmUyLTMxNjVhNGVjMGE4NSIsImlzcyI6Imh0dHBzOi8vZW5kb3JhLW9hdXRoMi5pc3RhZC5jby9yZWFsbXMvZW5kb3JhX2FwaSIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiJhM2RjNzc3Yy1lYWFlLTQ3MDQtOWIyNS0yNWM3ODlmMTJkMDUiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzcHJpbmctYWRtaW4iLCJzaWQiOiI2ZDMwNmI5Yy01ODAxLTRjMmMtODU4OC1lNzEzMjA4NDdiN2QiLCJhY3IiOiIxIiwiYWxsb3dlZC1vcmlnaW5zIjpbIi8qIl0sInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJkZWZhdWx0LXJvbGVzLWVuZG9yYV9hcGkiLCJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJwcm9maWxlIGVtYWlsIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm5hbWUiOiJSaW4gU2Fub20iLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJyaW5zYW5vbSIsImdpdmVuX25hbWUiOiJSaW4iLCJmYW1pbHlfbmFtZSI6IlNhbm9tIiwiZW1haWwiOiJyaW5zYW5vbTNAZ21haWwuY29tIn0.ZKk3HCVpHqr5_iWSURL19x9HItgqC2vkg-UZkl2WQ3u942w1vxNatRCmILgiu2Fx6dpHfDXi5tU9vLfDhOC6CMdATfC8OTIxWBDMNYHm-Ke_lKqce3Ld6aYlnBlPloPONLZ9-AQ08R0rU5EDrN1XhFd-OsCE7IH5tOm7EjerGRHdF9ib2QDijZiJ5lLtHW99QhL2O8DbOIl0XyXFS2JrOGRgsb0Jf5WxffZJw4CmQu9nu-i5_xKh7j8RUOml7RdAbdUcUE9tk3YTVmxe3dHmQuO_rg3JXerahBDWY54-CoOGCH-3ihXVY7vgTguvgQhXd2cejLf-Bwwp4f5-TMY4UQ",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/table",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"table"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Tables by Project UUID",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/table/project/{{projectUuid}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"table",
+										"project",
+										"{{projectUuid}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Table by Name and Project",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/table/{{schemaName}}/project/{{projectUuid}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"table",
+										"{{schemaName}}",
+										"project",
+										"{{projectUuid}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Data Source",
+					"item": [
+						{
+							"name": "Insert Data with Path Params",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"age\": 30,\n  \"isActive\": true\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/table/{{schemaName}}/project/{{projectUuid}}/user/{{userUuid}}/data",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"table",
+										"{{schemaName}}",
+										"project",
+										"{{projectUuid}}",
+										"user",
+										"{{userUuid}}",
+										"data"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Insert Data with Body",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICI5SGJROV9WSnVOZW9pWnF3WnU0d1NKZjI2b1V4YzZNeTB4SkxKcnlrV0VrIn0.eyJleHAiOjE3NTY3MTQ3MzcsImlhdCI6MTc1NjcxNDQzNywianRpIjoib25ydHJvOmRmYjUyNDBkLWMwMzYtNGY2YS1kNTMzLWVjZTQyMGEyODBiMyIsImlzcyI6Imh0dHBzOi8vZW5kb3JhLW9hdXRoMi5pc3RhZC5jby9yZWFsbXMvZW5kb3JhX2FwaSIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiJhM2RjNzc3Yy1lYWFlLTQ3MDQtOWIyNS0yNWM3ODlmMTJkMDUiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzcHJpbmctYWRtaW4iLCJzaWQiOiJhYTNhMjM1MC00YmQ1LTQxNjktOWQ4MC0xOWNmYjZiZjMxMWIiLCJhY3IiOiIxIiwiYWxsb3dlZC1vcmlnaW5zIjpbIi8qIl0sInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJkZWZhdWx0LXJvbGVzLWVuZG9yYV9hcGkiLCJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJwcm9maWxlIGVtYWlsIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm5hbWUiOiJSaW4gU2Fub20iLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJyaW5zYW5vbSIsImdpdmVuX25hbWUiOiJSaW4iLCJmYW1pbHlfbmFtZSI6IlNhbm9tIiwiZW1haWwiOiJyaW5zYW5vbTNAZ21haWwuY29tIn0.iXBGiS21-jY-SykO2BxfZFqQUS4nNz8fCGfyXqjgwf2o0lPiopF31Hxnumodt-47CENdWt-StFD9SV_UoZkMTu1jXLCvXhvViGM5T5Xcq_NYvD-j2Re2ndnj9zKZsD-NKTguer7YWauwye8-sOc3CTApLOwqetaPNrKJ8Jx3cbhTOrUBBkyfWz2FeKAL9MEuVNfJuYZ6J7CFx03FZY5OMWz7apWRp1NWssi-nGkVFUix050q4yHsiwpaS7OMU_coMRMWsguxBtsKUaScF7UslfkLJm4ulE-OoEf5BxvhvUb-emefyNQvB2TAQxUrQ6Yry5XphXRnxY2V3EqLDVmSuQ",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{authToken}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"projectUuid\": \"{{projectUuid}}\",\n  \"schemaName\": \"{{schemaName}}\",\n  \"data\": {\n   \"name\": \"iPhone 15 Pro\",\n      \"price\": 1299.99,\n      \"description\": \"Latest Apple smartphone with A17 chip\",\n      \"category\": \"Electronics\"\n  }\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/table/data",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"table",
+										"data"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get All Data from Table",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICI5SGJROV9WSnVOZW9pWnF3WnU0d1NKZjI2b1V4YzZNeTB4SkxKcnlrV0VrIn0.eyJleHAiOjE3NTY5MjgzMDMsImlhdCI6MTc1Njg5MjMwMywianRpIjoib25ydHJvOmRiYmM5YWJkLTk2ZjQtOWQwMy1hMmUyLTMxNjVhNGVjMGE4NSIsImlzcyI6Imh0dHBzOi8vZW5kb3JhLW9hdXRoMi5pc3RhZC5jby9yZWFsbXMvZW5kb3JhX2FwaSIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiJhM2RjNzc3Yy1lYWFlLTQ3MDQtOWIyNS0yNWM3ODlmMTJkMDUiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzcHJpbmctYWRtaW4iLCJzaWQiOiI2ZDMwNmI5Yy01ODAxLTRjMmMtODU4OC1lNzEzMjA4NDdiN2QiLCJhY3IiOiIxIiwiYWxsb3dlZC1vcmlnaW5zIjpbIi8qIl0sInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJkZWZhdWx0LXJvbGVzLWVuZG9yYV9hcGkiLCJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJwcm9maWxlIGVtYWlsIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm5hbWUiOiJSaW4gU2Fub20iLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJyaW5zYW5vbSIsImdpdmVuX25hbWUiOiJSaW4iLCJmYW1pbHlfbmFtZSI6IlNhbm9tIiwiZW1haWwiOiJyaW5zYW5vbTNAZ21haWwuY29tIn0.ZKk3HCVpHqr5_iWSURL19x9HItgqC2vkg-UZkl2WQ3u942w1vxNatRCmILgiu2Fx6dpHfDXi5tU9vLfDhOC6CMdATfC8OTIxWBDMNYHm-Ke_lKqce3Ld6aYlnBlPloPONLZ9-AQ08R0rU5EDrN1XhFd-OsCE7IH5tOm7EjerGRHdF9ib2QDijZiJ5lLtHW99QhL2O8DbOIl0XyXFS2JrOGRgsb0Jf5WxffZJw4CmQu9nu-i5_xKh7j8RUOml7RdAbdUcUE9tk3YTVmxe3dHmQuO_rg3JXerahBDWY54-CoOGCH-3ihXVY7vgTguvgQhXd2cejLf-Bwwp4f5-TMY4UQ",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/table/{{schemaName}}/data",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"table",
+										"{{schemaName}}",
+										"data"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Table Data by Project",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/table/{{schemaName}}/data/project/{{projectUuid}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"table",
+										"{{schemaName}}",
+										"data",
+										"project",
+										"{{projectUuid}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update Record by ID",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"Updated Name\",\n  \"email\": \"updated@example.com\",\n  \"age\": 35,\n  \"isActive\": false\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/table/{{schemaName}}/{{recordId}}/project/{{projectUuid}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"table",
+										"{{schemaName}}",
+										"{{recordId}}",
+										"project",
+										"{{projectUuid}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Record by ID",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/table/{{schemaName}}/{{recordId}}/project/{{projectUuid}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"table",
+										"{{schemaName}}",
+										"{{recordId}}",
+										"project",
+										"{{projectUuid}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Record with All Relations",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICI5SGJROV9WSnVOZW9pWnF3WnU0d1NKZjI2b1V4YzZNeTB4SkxKcnlrV0VrIn0.eyJleHAiOjE3NTY0NDE4MjEsImlhdCI6MTc1NjQ0MTUyMSwianRpIjoib25ydHJvOmI5MzkyYjQyLTlkNDktYzg5Zi03ZjYyLTJiNDE1ZjIyNzQ5MyIsImlzcyI6Imh0dHBzOi8vZW5kb3JhLW9hdXRoMi5pc3RhZC5jby9yZWFsbXMvZW5kb3JhX2FwaSIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiJhM2RjNzc3Yy1lYWFlLTQ3MDQtOWIyNS0yNWM3ODlmMTJkMDUiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzcHJpbmctYWRtaW4iLCJzaWQiOiI3OTVjNTFjNy1hZmE1LTRlODQtOWMxMy1mZGNlNGI5N2IwNzEiLCJhY3IiOiIxIiwiYWxsb3dlZC1vcmlnaW5zIjpbIi8qIl0sInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJkZWZhdWx0LXJvbGVzLWVuZG9yYV9hcGkiLCJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJwcm9maWxlIGVtYWlsIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm5hbWUiOiJSaW4gU2Fub20iLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJyaW5zYW5vbSIsImdpdmVuX25hbWUiOiJSaW4iLCJmYW1pbHlfbmFtZSI6IlNhbm9tIiwiZW1haWwiOiJyaW5zYW5vbTNAZ21haWwuY29tIn0.x7sWTOUozjHc_HoMPCf1zfSLmwvAD9bSePQwiyb9AA6D0v17N97ht3zR5lKqk066kpDCueFAb51XOGDO4FTdDmmpwdTNLwsgkwyb5GH99LxnHbomWGbA4Jgga8dAC1ByD9BP34Bm9jaupRs1czrJVyzsI0KrsK0a7VdSbFk2H-e-Ed4CrODqwwfRQJB_thGSa8wAoOgR8DRSHbv2A3PQFdUSuGPmVQQZfA1hRpdzgLGcRKA0cjIj6VAHKIPY2ZAP1NwJuoSBTlGAwUo_NmqPfzP4ydMpvRxWDd_3TCOQgQpiKrdJYvwMSMJmBPverzUkPS66D2mTUP19WwfZXPmf7A",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/table/{{schemaName}}/project/{{projectUuid}}/record/{{recordId}}/with-relations",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"table",
+										"{{schemaName}}",
+										"project",
+										"{{projectUuid}}",
+										"record",
+										"{{recordId}}",
+										"with-relations"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Related Tables",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/table/{{schemaName}}/project/{{projectUuid}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"table",
+										"{{schemaName}}",
+										"project",
+										"{{projectUuid}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Dynamic Table API",
+			"item": [
+				{
+					"name": "Get All Records from Table",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/tables/{{schemaName}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"tables",
+								"{{schemaName}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Record in Table",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"projectId\": \"{{projectUuid}}\",\n  \"name\": \"Dynamic Record\",\n  \"email\": \"dynamic@example.com\",\n  \"age\": 28,\n  \"isActive\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/tables/{{schemaName}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"tables",
+								"{{schemaName}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Record by ID (Dynamic)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/tables/{{schemaName}}/{{recordId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"tables",
+								"{{schemaName}}",
+								"{{recordId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Record by ID (Dynamic)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Updated Dynamic Record\",\n  \"email\": \"updated.dynamic@example.com\",\n  \"age\": 32,\n  \"isActive\": false\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/tables/{{schemaName}}/{{recordId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"tables",
+								"{{schemaName}}",
+								"{{recordId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Record by ID (Dynamic)",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/tables/{{schemaName}}/{{recordId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"tables",
+								"{{schemaName}}",
+								"{{recordId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Dynamic Endpoints",
+			"item": [
+				{
+					"name": "Get All Endpoint Documentation",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/endpoints/docs",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"endpoints",
+								"docs"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Endpoint Documentation for Table",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/endpoints/docs/{{schemaName}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"endpoints",
+								"docs",
+								"{{schemaName}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Generate Endpoints for Table",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/endpoints/generate/{{schemaName}}/project/{{projectUuid}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"endpoints",
+								"generate",
+								"{{schemaName}}",
+								"project",
+								"{{projectUuid}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "OpenAPI Documentation",
+			"item": [
+				{
+					"name": "Get OpenAPI Specification",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/openapi/project/{{projectId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"openapi",
+								"project",
+								"{{projectId}}"
+							]
+						},
+						"description": "Generate OpenAPI specification for a specific project"
+					},
+					"response": []
+				},
+				{
+					"name": "Download Postman Collection",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/openapi/project/{{projectId}}/postman",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"openapi",
+								"project",
+								"{{projectId}}",
+								"postman"
+												},
+						"description": "Download generated Postman collection for a specific project"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Auto-fill authorization token for protected endpoints",
+					"const authToken = pm.environment.get('authToken');",
+					"",
+					"// List of endpoints that require authentication",
+					"const protectedEndpoints = [",
+					"    '/projects',",
+					"    '/table',",
+					"    '/api/users/profile'",
+					"];",
+					"",
+					"// Check if current request needs authentication",
+					"const requestUrl = pm.request.url.toString();",
+					"const needsAuth = protectedEndpoints.some(endpoint => ",
+					"    requestUrl.includes(endpoint) && !requestUrl.includes('/api/auth/')",
+					");",
+					"",
+					"// Auto-set Authorization header if token exists and endpoint needs auth",
+					"if (needsAuth && authToken && authToken !== 'your-auth-token') {",
+					"    pm.request.headers.add({",
+					"        key: 'Authorization',",
+					"        value: `Bearer ${authToken}`",
+					"    });",
+					"    ",
+					"    console.log('✅ Authorization header automatically set for protected endpoint');",
+					"} else if (needsAuth && (!authToken || authToken === 'your-auth-token')) {",
+					"    console.log('⚠️  Warning: This endpoint requires authentication. Please login first.');",
+					"    console.log('💡 Tip: Run the \"Login\" request first to get an auth token.');",
+					"} else {",
+					"    console.log('ℹ️  Public endpoint - no authentication required');",
+					"}",
+					"",
+					"// Display current auth status",
+					"if (authToken && authToken !== 'your-auth-token') {",
+					"    console.log(`🔐 Auth Token Status: Active (${authToken.substring(0, 20)}...)`);",
+					"} else {",
+					"    console.log('🔓 Auth Token Status: Not set or default value');",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Global test script for all requests",
+					"",
+					"// Log response status and time",
+					"console.log(`📊 Response Status: ${pm.response.code} - ${pm.response.status}`);",
+					"console.log(`⏱️  Response Time: ${pm.response.responseTime}ms`);",
+					"",
+					"// Auto-save tokens from login response",
+					"if (pm.info.requestName === 'Login' && pm.response.code === 200) {",
+					"    try {",
+					"        const responseJson = pm.response.json();",
+					"        ",
+					"        if (responseJson.accessToken) {",
+					"            pm.environment.set('authToken', responseJson.accessToken);",
+					"            console.log('✅ Access token automatically saved to environment');",
+					"        }",
+					"        ",
+					"        if (responseJson.refreshToken) {",
+					"            pm.environment.set('refreshToken', responseJson.refreshToken);",
+					"            console.log('✅ Refresh token automatically saved to environment');",
+					"        }",
+					"        ",
+					"        if (responseJson.userId) {",
+					"            pm.environment.set('userUuid', responseJson.userId);",
+					"            console.log('✅ User UUID automatically saved to environment');",
+					"        }",
+					"        ",
+					"        if (responseJson.username) {",
+					"            pm.environment.set('username', responseJson.username);",
+					"            console.log('✅ Username automatically saved to environment');",
+					"        }",
+					"        ",
+					"        if (responseJson.email) {",
+					"            pm.environment.set('email', responseJson.email);",
+					"            console.log('✅ Email automatically saved to environment');",
+					"        }",
+					"        ",
+					"        console.log('🎉 Login successful! All tokens and user info saved automatically.');",
+					"        console.log('💡 You can now use protected endpoints without manually setting headers.');",
+					"        ",
+					"    } catch (error) {",
+					"        console.log('❌ Error parsing login response:', error);",
+					"    }",
+					"}",
+					"",
+					"// Auto-save project UUID from create project response",
+					"if (pm.info.requestName === 'Create Project' && pm.response.code === 200) {",
+					"    try {",
+					"        const responseJson = pm.response.json();",
+					"        if (responseJson.projectUuid) {",
+					"            pm.environment.set('projectUuid', responseJson.projectUuid);",
+					"            console.log('✅ Project UUID automatically saved to environment');",
+					"        }",
+					"    } catch (error) {",
+					"        console.log('❌ Error parsing create project response:', error);",
+					"    }",
+					"}",
+					"",
+					"// Check for authentication errors",
+					"if (pm.response.code === 401) {",
+					"    console.log('🚫 Authentication Error: Please login to get a valid token');",
+					"    console.log('💡 Tip: Run the \"Login\" request first');",
+					"} else if (pm.response.code === 403) {",
+					"    console.log('🚫 Authorization Error: You do not have permission for this action');",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "projectUuid",
+			"value": "your-project-uuid",
+			"type": "string"
+		},
+		{
+			"key": "userUuid",
+			"value": "your-user-uuid",
+			"type": "string"
+		},
+		{
+			"key": "schemaName",
+			"value": "your-schema-name",
+			"type": "string"
+		},
+		{
+			"key": "recordId",
+			"value": "your-record-id",
+			"type": "string"
+		},
+		{
+			"key": "projectId",
+			"value": "your-project-id",
+			"type": "string"
+		},
+		{
+			"key": "authToken",
+			"value": "your-auth-token",
+			"type": "string"
+		}
+	]
+}
+

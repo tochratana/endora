@@ -26,6 +26,30 @@ public class DynamicTableController {
         }
     }
 
+    // GET /api/tables/{schemaName}/project/{projectUuid} - Get all records with relationships
+    @GetMapping("/{schemaName}/project/{projectUuid}")
+    public ResponseEntity<List<Map<String, Object>>> getAllRecordsWithRelations(
+            @PathVariable String schemaName,
+            @PathVariable String projectUuid) {
+        try {
+            // Use the enhanced method from TableServiceImpl that includes relationships
+            if (tableService instanceof rinsanom.com.springtwodatasoure.service.impl.TableServiceImpl) {
+                rinsanom.com.springtwodatasoure.service.impl.TableServiceImpl tableServiceImpl =
+                        (rinsanom.com.springtwodatasoure.service.impl.TableServiceImpl) tableService;
+                List<Map<String, Object>> records = tableServiceImpl.getAllDataFromTableWithRelations(schemaName, projectUuid);
+                return ResponseEntity.ok(records);
+            } else {
+                // Fallback to basic method if cast fails
+                List<Map<String, Object>> records = tableService.getDataFromTableByProject(schemaName, projectUuid);
+                return ResponseEntity.ok(records);
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(List.of(Map.of(
+                    "error", "Failed to retrieve records with relations: " + e.getMessage()
+            )));
+        }
+    }
+
     // POST /api/tables/{schemaName} - Create a new record in a specific table
     @PostMapping("/{schemaName}")
     public ResponseEntity<Map<String, Object>> createRecord(
@@ -36,25 +60,25 @@ public class DynamicTableController {
             String projectId = (String) data.get("projectId");
             if (projectId == null || projectId.isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of(
-                    "error", "projectId is required in the request body"
+                        "error", "projectId is required in the request body"
                 ));
             }
 
             tableService.insertData(schemaName, projectId, data);
             return ResponseEntity.ok(Map.of(
-                "message", "Record created successfully",
-                "table", schemaName,
-                "projectId", projectId,
-                "data", data
+                    "message", "Record created successfully",
+                    "table", schemaName,
+                    "projectId", projectId,
+                    "data", data
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
-                "error", "Failed to create record: " + e.getMessage()
+                    "error", "Failed to create record: " + e.getMessage()
             ));
         }
     }
 
-    // GET /api/tables/{schemaName}/{id} - Get a specific record by ID
+    // GET /api/tables/{schemaName}/{id} - Get a specific record by ID (basic version)
     @GetMapping("/{schemaName}/{id}")
     public ResponseEntity<Map<String, Object>> getRecordById(
             @PathVariable String schemaName,
@@ -67,8 +91,40 @@ public class DynamicTableController {
             return ResponseEntity.ok(record);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
-                "error", "Failed to retrieve record",
-                "message", e.getMessage()
+                    "error", "Failed to retrieve record",
+                    "message", e.getMessage()
+            ));
+        }
+    }
+
+    // GET /api/tables/{schemaName}/{id}/project/{projectUuid}/relations - Get a specific record with relationships
+    @GetMapping("/{schemaName}/{id}/project/{projectUuid}/relations")
+    public ResponseEntity<Map<String, Object>> getRecordByIdWithRelations(
+            @PathVariable String schemaName,
+            @PathVariable String id,
+            @PathVariable String projectUuid) {
+        try {
+            // Use the enhanced method that includes relationships as arrays
+            if (tableService instanceof rinsanom.com.springtwodatasoure.service.impl.TableServiceImpl) {
+                rinsanom.com.springtwodatasoure.service.impl.TableServiceImpl tableServiceImpl =
+                        (rinsanom.com.springtwodatasoure.service.impl.TableServiceImpl) tableService;
+                Map<String, Object> record = tableServiceImpl.getRecordByIdWithRelations(schemaName, id, projectUuid);
+                if (record == null) {
+                    return ResponseEntity.notFound().build();
+                }
+                return ResponseEntity.ok(record);
+            } else {
+                // Fallback to basic method
+                Map<String, Object> record = tableService.getRecordById(schemaName, id);
+                if (record == null) {
+                    return ResponseEntity.notFound().build();
+                }
+                return ResponseEntity.ok(record);
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Failed to retrieve record with relations",
+                    "message", e.getMessage()
             ));
         }
     }
@@ -82,15 +138,15 @@ public class DynamicTableController {
         try {
             tableService.updateRecord(schemaName, id, data);
             return ResponseEntity.ok(Map.of(
-                "message", "Record updated successfully",
-                "table", schemaName,
-                "id", id,
-                "data", data
+                    "message", "Record updated successfully",
+                    "table", schemaName,
+                    "id", id,
+                    "data", data
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
-                "error", "Failed to update record",
-                "message", e.getMessage()
+                    "error", "Failed to update record",
+                    "message", e.getMessage()
             ));
         }
     }
@@ -103,14 +159,14 @@ public class DynamicTableController {
         try {
             tableService.deleteRecord(schemaName, id);
             return ResponseEntity.ok(Map.of(
-                "message", "Record deleted successfully",
-                "table", schemaName,
-                "id", id
+                    "message", "Record deleted successfully",
+                    "table", schemaName,
+                    "id", id
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
-                "error", "Failed to delete record",
-                "message", e.getMessage()
+                    "error", "Failed to delete record",
+                    "message", e.getMessage()
             ));
         }
     }
