@@ -32,6 +32,9 @@ dependencies {
     implementation 'com.google.cloud.sql:postgres-socket-factory:1.15.0'
     implementation 'com.h2database:h2'  // H2 for graceful startup fallback
 
+    // .env file support
+    implementation 'me.paulschwarz:spring-dotenv:4.0.0'
+
     // Lombok - Updated version for better Java 17+ compatibility
     compileOnly 'org.projectlombok:lombok:1.18.30'
     annotationProcessor 'org.projectlombok:lombok:1.18.30'

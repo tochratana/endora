@@ -1,9 +1,9 @@
 spring:
   # Database Configuration for Local Development
   datasource:
-    url: jdbc:postgresql://localhost:5432/endora
-    username: oudom
-    password: 123
+    url: ${DATABASE_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   # JPA Configuration
@@ -19,10 +19,51 @@ spring:
   # MongoDB Configuration for Local Development
   data:
     mongodb:
-      uri: mongodb://localhost:27017/endora
-    # Redis Configuration (if you want to add caching)
-    redis:
-      host: localhost
+      uri: ${MONGODB_URI}
+
+  # Email Configuration for Local Development
+  mail:
+    host: ${EMAIL_HOST}
+    port: ${EMAIL_PORT}
+    username: ${EMAIL_USERNAME}
+    password: ${EMAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connection-timeout: 5000
+          timeout: 3000
+          write-timeout: 5000
+
+  # Keycloak Configuration for Local Development
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI}
+
+# Keycloak Configuration
+keycloak:
+  server-url: ${KEYCLOAK_SERVER_URL}
+  realm: ${KEYCLOAK_REALM}
+  client-id: ${KEYCLOAK_CLIENT_ID}
+  client-secret: ${KEYCLOAK_CLIENT_SECRET}
+  admin:
+    client-id: ${KEYCLOAK_ADMIN_CLIENT_ID}
+    client-secret: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
+
+# OTP Configuration
+app:
+  otp:
+    expiry-minutes: ${OTP_EXPIRY_MINUTES}
+    max-attempts: ${OTP_MAX_ATTEMPTS}
+  # OpenAPI Configuration for Local Development
+  openapi:
+    server:
+      url: http://localhost:8080
+      description: Local Development Server
 
 # Logging Configuration for Development
 logging:
@@ -46,10 +87,3 @@ management:
 # Server Configuration
 server:
   port: 8080
-
-# OpenAPI Configuration for Local Development
-app:
-  openapi:
-    server:
-      url: http://localhost:8080
-      description: Local Development Server
