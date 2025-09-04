@@ -93,7 +93,7 @@ jobs:
           --memory 1Gi \
           --cpu 1 \
           --timeout 600 \
-          --set-env-vars="SPRING_PROFILES_ACTIVE=cloud" \
+          --set-env-vars="SPRING_PROFILES_ACTIVE=prod" \
           --set-env-vars="DATABASE_URL=${{ secrets.DATABASE_URL }}" \
           --set-env-vars="DB_USERNAME=${{ secrets.DB_USERNAME }}" \
           --set-env-vars="DB_PASSWORD=${{ secrets.DB_PASSWORD }}" \
