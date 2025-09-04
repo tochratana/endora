@@ -94,18 +94,18 @@ jobs:
           --cpu 1 \
           --timeout 600 \
           --set-env-vars="SPRING_PROFILES_ACTIVE=cloud" \
-          --set-env-vars="DATABASE_URL=jdbc:postgresql://google/endora?cloudSqlInstance=api-engine-backend-20250829:asia-southeast1:api-ngin-postgres-db-asia&socketFactory=com.google.cloud.sql.postgres.SocketFactory&useSSL=false" \
-          --set-env-vars="DB_USERNAME=postgres" \
-          --set-env-vars="DB_PASSWORD=£0t[=4WhF6h6" \
+          --set-env-vars="DATABASE_URL=${{ secrets.DATABASE_URL }}" \
+          --set-env-vars="DB_USERNAME=${{ secrets.DB_USERNAME }}" \
+          --set-env-vars="DB_PASSWORD=${{ secrets.DB_PASSWORD }}" \
           --set-env-vars="DB_DRIVER=org.postgresql.Driver" \
           --set-env-vars="DB_PLATFORM=org.hibernate.dialect.PostgreSQLDialect" \
           --set-env-vars="DDL_AUTO=update" \
-          --set-env-vars="SPRING_DATA_MONGODB_URI=mongodb+srv://endora_user:EndoraSecure2024!@endora-cluster.p5pmd6m.mongodb.net/endora?retryWrites=true&w=majority" \
-          --set-env-vars="KEYCLOAK_SERVER_URL=https://endora-oauth2.istad.co/" \
-          --set-env-vars="KEYCLOAK_REALM=endora_api" \
-          --set-env-vars="KEYCLOAK_CLIENT_ID=spring-admin" \
-          --set-env-vars="KEYCLOAK_CLIENT_SECRET=uliUJohOY9OI1jM1SnFrog5iJ23JXWJN" \
-          --set-env-vars="KEYCLOAK_ADMIN_CLIENT_ID=admin-cli" \
-          --set-env-vars="KEYCLOAK_ADMIN_CLIENT_SECRET=b2L6hrMg76JLk4GSLd8CGMPRJNnAOko2" \
-          --set-env-vars="KEYCLOAK_ISSUER_URI=https://endora-oauth2.istad.co/realms/endora_api" \
-          --add-cloudsql-instances=api-engine-backend-20250829:asia-southeast1:api-ngin-postgres-db-asia
+          --set-env-vars="SPRING_DATA_MONGODB_URI=${{ secrets.MONGODB_URI }}" \
+          --set-env-vars="KEYCLOAK_SERVER_URL=${{ secrets.KEYCLOAK_SERVER_URL }}" \
+          --set-env-vars="KEYCLOAK_REALM=${{ secrets.KEYCLOAK_REALM }}" \
+          --set-env-vars="KEYCLOAK_CLIENT_ID=${{ secrets.KEYCLOAK_CLIENT_ID }}" \
+          --set-env-vars="KEYCLOAK_CLIENT_SECRET=${{ secrets.KEYCLOAK_CLIENT_SECRET }}" \
+          --set-env-vars="KEYCLOAK_ADMIN_CLIENT_ID=${{ secrets.KEYCLOAK_ADMIN_CLIENT_ID }}" \
+          --set-env-vars="KEYCLOAK_ADMIN_CLIENT_SECRET=${{ secrets.KEYCLOAK_ADMIN_CLIENT_SECRET }}" \
+          --set-env-vars="KEYCLOAK_ISSUER_URI=${{ secrets.KEYCLOAK_ISSUER_URI }}" \
+          --add-cloudsql-instances=${{ secrets.CLOUDSQL_INSTANCE }}
