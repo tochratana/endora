@@ -17,8 +17,11 @@ public class Projects {
     private String projectUuid;
     private String projectName;
     private String description;
-    private boolean hasUsersTable = false;
+
+    // authentication fields
+    private boolean authenticationEnabled = false;
     private String jwtSecret;
+    private String userTableName = "users";
 
     // Constructor for creating new projects
 //    public Projects(String userUuid, String projectName, String description) {

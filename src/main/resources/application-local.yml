@@ -40,7 +40,7 @@ spring:
   # Keycloak Configuration for Local Development
   security:
     oauth2:
-      resourceserver:
+      resource server:
         jwt:
           issuer-uri: ${KEYCLOAK_ISSUER_URI}
 
@@ -53,6 +53,9 @@ keycloak:
   admin:
     client-id: ${KEYCLOAK_ADMIN_CLIENT_ID}
     client-secret: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
+  events:
+    enabled: true
+    listeners: jboss-logging
 
 # OTP Configuration
 app:
